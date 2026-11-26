@@ -152,4 +152,4 @@ Added the **Multi-Track MIDI Composition Studio**, bidirectional **ATEK303 / Ski
 
 - **Phase 3 — Engine Bridge, Hardware MIDI & Live Macros:** Virtual MIDI (`loopMIDI`) or direct engine bridge to `fm1-live.exe`, incoming MIDI listener (`easymidi` / MIDI port), and live hardware triggers for `presets.json` macros (`Chaos Envelope`, `Algorithm Roulette`, `Smart Macro Assign`).
 - **Phase 4 — Local WebSocket Dashboard (MVP):** Browser UI on `ws://localhost:3000` displaying active style, 4-slot readiness, and live operator/ADSR telemetry.
-- **v2 Enhancements:** 24 PPQN MIDI Clock **Stage & Snap** bar quantization, **Ghost Call-and-Response**, ESP32-S3 USB Serial telemetry, and Raspberry Pi USB Ethernet gadget kiosk mode.
+- **v2 Enhancements:** 24 PPQN MIDI Clock **Stage & Snap** bar quantization and **Ghost Call-and-Response** MIDI improvisation.
