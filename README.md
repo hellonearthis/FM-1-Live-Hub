@@ -106,6 +106,11 @@ Double-click or run from PowerShell:
 - `FM1_WINDOW_X=` / `FM1_WINDOW_Y=` *(blank = centered; set pixel coordinates to pin screen position)*
 - `FM1_WINDOW_LOCK=1` *(set to `0` to remember manual resize/move bounds in `hub/.electron-data/window-bounds.json`)*
 
+### Hub Quick Controls & Tooltips
+- **Sticky Section Bar & Top Quick Jump Grid (`Quick Jump`):** Pinned right at the top of the Hub with 1-click **Tracks `T1`–`T6`** (switches active MIDI channel `1–6`), **ATEK303 Slots `1–32`** across two banks (`Slots 1–16` / `17–32` — green = saved in `04_atek303.flash`, left-click saved slots to pull & queue seamlessly, right-click to activate directly in ATEK303), and section scroll links.
+- **Full-Width Co-Pilot Macro Sliders (Section 4):** Wide performance sliders for **`Algorithm Roulette`**, **`Morph → Slot`**, and **`AI Smart Macro`**.
+- **Tooltips ON / OFF Switch (Header):** Every control has hover documentation (`title` tooltip). Uncheck **`Tooltips`** in the top-right header anytime to hide tooltips across the entire Hub (preference saved in `localStorage`).
+
 ---
 
 ## 4. ATEK303 v1.4 & Skiff v2.7.2 Workflows

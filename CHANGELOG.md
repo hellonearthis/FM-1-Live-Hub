@@ -124,6 +124,30 @@ Implemented Phases 1 and 2 in `hub/` using Pure Functional Architecture (no `cla
 
 ---
 
+## 2026-11-27 — Multi-Track MIDI Studio, ATEK303 / Skiff Bridges & Hub UX Upgrade
+
+Added the **Multi-Track MIDI Composition Studio**, bidirectional **ATEK303 / Skiff** hardware & `.flash` workflows, locked launcher bounds, top-level Quick Jump controls, tooltips toggle, and GitHub publication:
+
+- **Locked Default Hub Window Size (`Launch FM-1 App.bat` & `hub\electron\main.js`):**
+  - Pinned default window bounds in `Launch FM-1 App.bat` (`FM1_WINDOW_WIDTH=1180`, `FM1_WINDOW_HEIGHT=1056`, optional `FM1_WINDOW_X`/`FM1_WINDOW_Y`, `FM1_WINDOW_LOCK=1`) with pure env resolution (`parseFiniteEnvNumber`, `isWindowBoundsLocked`, `resolveWindowBounds`) in `hub\electron\main.js`.
+- **Multi-Track MIDI Composition Studio (Section 2C):**
+  - Created `hub\prompts\fm1-midi-composition.md` defining strict comment-free JSON rules, scientific note names (`"E4"`, `"F#3"`, `"Bb2"`), grid subdivisions, and target layouts for **Skiff** (`2–4` channels) vs. **ATEK303** (monophonic `length_beats: 4`).
+  - Added pure codec `hub\src\core\midiComposition.js` (`STRICT_COMPOSITION_SCHEMA`, `noteNameToMidi`, `midiToNoteName`, `stripJsonCommentsAndFences`, `validateComposition`, `parseCompositionJson`, `compositionTrackToAtek16StepPattern`, and Standard MIDI File Type 1 `.mid` encoder `compositionToMidiFileBytes`).
+  - Added `requestCompositionFromLlm` & `requestCompositionRefinementFromLlm` in `hub\src\shell\llmClient.js` and `/compositions/*` REST routes (`prompt-guide`, `import`, `generate`, `refine`, `to-pattern`, `export-mid`) in `hub\src\shell\fastPathHttp.js`.
+  - Wired **Section 2C** UI in `hub\public\index.html` with AI Generate/Refine, **`Copy Skill Prompt`**, JSON/JSONC paste import, per-track mute & click-to-jump pills, multi-channel MIDI/WebAudio loop playback, 1-click **`⏺ Record → Skiff`**, **`Load Track → 16-Step Grid`**, and **`Export .mid`**.
+- **ATEK303 `.flash` Slot Sync, Active Pattern Write & Auto-Reload:**
+  - Extended `hub\src\core\atekFlashCodec.js` with `readAtekActivePattern`, `activateAtekFlashSlot`, and `{ setActive: true }` support to write store `oid 0` alongside preset banks.
+  - Added `withAtekFlashReload`, `POST /atek/flash/export-composition` (single or all tracks to consecutive slots), and `POST /atek/flash/activate` in `hub\src\shell\fastPathHttp.js`, plus **`Auto-Reload ATEK303`**, **`↻ Refresh`**, **`⚡ Jump ATEK303 → Slot`**, **`↑ Send Track → ATEK303`**, and **`↑ All Tracks → ATEK303`** buttons.
+- **Top Quick Jump Grid, Wide Macro Sliders & Tooltips ON/OFF Toggle (`hub\public\index.html`):**
+  - Added sticky section jump bar (`Quick Jump`, `1. FM-1`, `2. MIDI`, `2B`, `2C`, `3`, `4`, `5`) and top **Quick Jump** card displaying **Tracks `T1`–`T6`** and **ATEK303 Slots `1–32`** (`Slots 1–16` / `Slots 17–32`) synced live with `#midi-ch-select` and `04_atek303.flash`.
+  - Widened Section 4 Co-Pilot sliders (`#roulette-slider`, `#morph-slider`, and `#smart-slider`) into dedicated full-width bars.
+  - Added hover tooltips across all Hub controls plus a persistent **`Tooltips`** ON/OFF checkbox in `<header>` backed by `MutationObserver` and `localStorage`.
+- **Documentation & Repository Setup:**
+  - Added `.gitignore`, root `README.md` (prerequisites, `FM1_LLM_URL`/`FM1_LLM_MODEL`/`FM1_LLM_TIMEOUT_MS` local LLM setup & troubleshooting, launcher/window vars, ATEK303 & Skiff guides, MCP overview), updated `CHANGELOG.md`, and published to `https://github.com/hellonearthis/FM-1-Live-Hub`.
+- **Verified (`hub\test\core.test.js`):** **16 / 16** tests passing + `node --check` + `vm.Script` inline script check (`0` errors).
+
+---
+
 ## Remaining Roadmap (Not Yet Implemented)
 
 - **Phase 3 — Engine Bridge, Hardware MIDI & Live Macros:** Virtual MIDI (`loopMIDI`) or direct engine bridge to `fm1-live.exe`, incoming MIDI listener (`easymidi` / MIDI port), and live hardware triggers for `presets.json` macros (`Chaos Envelope`, `Algorithm Roulette`, `Smart Macro Assign`).

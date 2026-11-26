@@ -166,6 +166,33 @@
     .slot-pad.empty-next { border-style: dashed; color: var(--accent); }
     .track-jump-btn { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
     .track-jump-btn.active { border-color: var(--accent); background: rgba(56, 189, 248, 0.18); color: #e0f2fe; }
+    .top-track-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .top-track-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 9px 8px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    }
+    .top-track-btn span { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .top-track-btn.active {
+      border-color: var(--accent); background: rgba(56, 189, 248, 0.2);
+      color: #e0f2fe; box-shadow: 0 0 0 1px var(--accent) inset;
+    }
+    .top-slot-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+    .top-slot-pad {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      padding: 6px 8px; border-radius: 7px; text-align: left; min-height: 44px;
+    }
+    .top-slot-num { font-size: 10px; font-weight: 700; color: var(--muted); }
+    .top-slot-name {
+      font-size: 11px; font-weight: 600; width: 100%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .top-slot-pad.saved { border-color: var(--green); background: rgba(34, 197, 94, 0.12); color: #dcfce7; }
+    .top-slot-pad.saved .top-slot-num { color: #86efac; }
+    .top-slot-pad.empty { border-style: dashed; opacity: 0.72; }
+    .top-slot-pad.selected {
+      border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset;
+      background: rgba(56, 189, 248, 0.16);
+    }
   </style>
 </head>
 <body>
@@ -176,48 +203,76 @@
         <div class="sub">Hardware Emulator Control + 4-Slot Unsloth Cache + Active FM Telemetry</div>
       </div>
       <div class="row">
-        <span class="badge"><span id="fm1-dot" class="dot"></span><span id="fm1-badge">FM-1: Stopped</span></span>
-        <span class="badge"><span id="hub-dot" class="dot on"></span><span id="hub-badge">Style: None (Epoch 0)</span></span>
-        <button id="btn-devtools" style="display:none;padding:5px 10px;font-size:12px;">DevTools (F12)</button>
+        <span class="badge" title="Shows whether fm1-live.exe is currently running from the Hub"><span id="fm1-dot" class="dot"></span><span id="fm1-badge">FM-1: Stopped</span></span>
+        <span class="badge" title="Active Section 3 AI genre style and cache generation epoch"><span id="hub-dot" class="dot on"></span><span id="hub-badge">Style: None (Epoch 0)</span></span>
+        <label class="badge" style="cursor:pointer;user-select:none;" data-keep-tip="true" title="Toggle hover tooltips on or off across the entire Hub (saved locally)">
+          <input id="chk-tooltips" type="checkbox" checked style="margin:0;" /> Tooltips
+        </label>
+        <button id="btn-devtools" style="display:none;padding:5px 10px;font-size:12px;" title="Toggle Electron Developer Tools (F12 / Ctrl+Shift+I)">DevTools (F12)</button>
       </div>
     </header>
 
     <nav class="jump-nav" aria-label="Quick section jump">
       <span style="font-size:11px;color:var(--muted);font-weight:700;margin-right:2px;">Jump:</span>
-      <button type="button" class="jump-btn" data-jump="sec-fm1">1. FM-1</button>
-      <button type="button" class="jump-btn" data-jump="sec-midi">2. MIDI</button>
-      <button type="button" class="jump-btn" data-jump="sec-seq">2B. Seq &amp; ATEK Slots</button>
-      <button type="button" class="jump-btn" data-jump="sec-comp">2C. Tracks / JSON</button>
-      <button type="button" class="jump-btn" data-jump="sec-slots">3. AI Slots</button>
-      <button type="button" class="jump-btn" data-jump="sec-patch">4. Patch &amp; FX</button>
-      <button type="button" class="jump-btn" data-jump="sec-logs">5. Logs</button>
+      <button type="button" class="jump-btn" data-jump="sec-jump" title="Scroll to top Quick Jump grid (Tracks T1–T6 &amp; ATEK303 Slots 1–32)">Quick Jump</button>
+      <button type="button" class="jump-btn" data-jump="sec-fm1" title="Scroll to Section 1: FM-1 Emulator Window launcher">1. FM-1</button>
+      <button type="button" class="jump-btn" data-jump="sec-midi" title="Scroll to Section 2: MIDI Ports, Track Ch, CC Mode &amp; Wave">2. MIDI</button>
+      <button type="button" class="jump-btn" data-jump="sec-seq" title="Scroll to Section 2B: 16-Step Sequencer, ATEK303 .flash &amp; Skiff REMOTE">2B. Seq &amp; ATEK Slots</button>
+      <button type="button" class="jump-btn" data-jump="sec-comp" title="Scroll to Section 2C: Multi-Track MIDI Composition Studio">2C. Tracks / JSON</button>
+      <button type="button" class="jump-btn" data-jump="sec-slots" title="Scroll to Section 3: AI Music Style &amp; 4-Slot Cache">3. AI Slots</button>
+      <button type="button" class="jump-btn" data-jump="sec-patch" title="Scroll to Section 4: Active Patch Telemetry, Sliders &amp; Snap FX">4. Patch &amp; FX</button>
+      <button type="button" class="jump-btn" data-jump="sec-logs" title="Scroll to Section 5: Live Debugging Console">5. Logs</button>
     </nav>
+
+    <section id="sec-jump" class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <h2 style="margin: 0;">Quick Jump · Tracks (T1–T6) &amp; ATEK303 Slots (1–32)</h2>
+        <div class="row">
+          <span id="top-jump-badge" class="badge" title="Currently active MIDI Track Channel and selected ATEK303 slot">Track T1 (Ch 1) · Slot #01</span>
+          <button type="button" id="btn-slot-bank-1" class="primary" style="padding: 4px 10px; font-size: 11px;" title="Show ATEK303 Factory &amp; User Slots #01–#16">Slots 1–16</button>
+          <button type="button" id="btn-slot-bank-2" style="padding: 4px 10px; font-size: 11px;" title="Show ATEK303 User Slots #17–#32">Slots 17–32</button>
+          <button type="button" id="btn-top-refresh" style="padding: 4px 10px; font-size: 11px;" title="Re-read saves/04_atek303.flash from disk">↻ Refresh</button>
+        </div>
+      </div>
+      <div id="top-track-grid" class="top-track-grid">
+        <button type="button" class="top-track-btn active" data-ch="1" title="Switch active Hub MIDI Out channel to Track 1 (Channel 1)">T1<span>Ch 1</span></button>
+        <button type="button" class="top-track-btn" data-ch="2" title="Switch active Hub MIDI Out channel to Track 2 (Channel 2)">T2<span>Ch 2</span></button>
+        <button type="button" class="top-track-btn" data-ch="3" title="Switch active Hub MIDI Out channel to Track 3 (Channel 3)">T3<span>Ch 3</span></button>
+        <button type="button" class="top-track-btn" data-ch="4" title="Switch active Hub MIDI Out channel to Track 4 (Channel 4)">T4<span>Ch 4</span></button>
+        <button type="button" class="top-track-btn" data-ch="5" title="Switch active Hub MIDI Out channel to Track 5 (Channel 5)">T5<span>Ch 5</span></button>
+        <button type="button" class="top-track-btn" data-ch="6" title="Switch active Hub MIDI Out channel to Track 6 (Channel 6)">T6<span>Ch 6</span></button>
+      </div>
+      <div id="top-slot-grid" class="top-slot-grid"></div>
+      <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">
+        Green = saved in <code>04_atek303.flash</code> · Left-click saved slot: Pull &amp; queue in Hub (zero-gap) · Right-click saved slot: Jump ATEK303 directly · Dashed = empty user slot
+      </div>
+    </section>
 
     <section id="sec-fm1" class="card">
       <h2>1. FM-1 Hardware Emulator Window</h2>
       <div class="row">
-        <select id="fw-select"></select>
-        <select id="mhz-select">
+        <select id="fw-select" title="Choose firmware package (.fwsc) from firmwares/ — auto-switches MIDI CC Mode for ATEK303 or Skiff"></select>
+        <select id="mhz-select" title="Emulated CPU clock speed in MHz (lower to 160 MHz if audio stutters)">
           <option value="240">240 MHz</option>
           <option value="160">160 MHz</option>
           <option value="120">120 MHz</option>
           <option value="320">320 MHz</option>
         </select>
-        <button id="btn-launch" class="primary">Open FM-1 Window</button>
-        <button id="btn-stop" class="danger">Stop FM-1</button>
+        <button id="btn-launch" class="primary" title="Launch fm1-live.exe with the selected firmware, clock, and flash save file">Open FM-1 Window</button>
+        <button id="btn-stop" class="danger" title="Stop the running fm1-live.exe emulator window">Stop FM-1</button>
       </div>
     </section>
 
     <section id="sec-midi" class="card">
       <h2>2. MIDI Hardware &amp; Synth Bridge (loopMIDI / Real Hardware)</h2>
       <div class="row" style="margin-bottom: 10px;">
-        <label style="font-size:12px;color:var(--muted);">MIDI In:
+        <label style="font-size:12px;color:var(--muted);" title="Select hardware controller or virtual MIDI port sending notes/CCs into the Hub">MIDI In:
           <select id="midi-in-select"><option value="">None</option></select>
         </label>
-        <label style="font-size:12px;color:var(--muted);">MIDI Out:
+        <label style="font-size:12px;color:var(--muted);" title="Select loopMIDI or USB-MIDI port sending notes, Clock &amp; CCs to FM-1">MIDI Out:
           <select id="midi-out-select"><option value="">None</option></select>
         </label>
-        <label style="font-size:12px;color:var(--muted);">Ch:
+        <label style="font-size:12px;color:var(--muted);" title="Active MIDI Track / Channel (1–6 for Skiff tracks, 10 for drums)">Ch:
           <select id="midi-ch-select">
             <option value="1">1</option><option value="2">2</option>
             <option value="3">3</option><option value="4">4</option>
@@ -237,12 +292,12 @@
             <option value="">Auto (Follow Patch)</option>
           </select>
         </label>
-        <button id="btn-midi-rescan">Rescan MIDI</button>
+        <button id="btn-midi-rescan" title="Re-scan connected USB-MIDI and loopMIDI ports">Rescan MIDI</button>
       </div>
       <div class="row">
-        <button id="btn-send-ccs" class="primary">Send Patch CCs Now</button>
-        <button id="btn-test-riff">Play Test Acid Riff</button>
-        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+        <button id="btn-send-ccs" class="primary" title="Immediately send the active patch's mapped MIDI CCs to MIDI Out">Send Patch CCs Now</button>
+        <button id="btn-test-riff" title="Play a short 8-note 303 test riff to MIDI Out and local WebAudio">Play Test Acid Riff</button>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Play a local browser 4-Op FM synth preview alongside MIDI Out when pressing keys A–K or sequencing">
           <input id="chk-webaudio" type="checkbox" checked /> Local 4-Op FM Preview (Keys A–K)
         </label>
       </div>
@@ -254,10 +309,10 @@
         <span id="seq-badge" class="badge">Stopped (Step 1/16)</span>
       </div>
       <div class="row" style="margin-bottom: 8px;">
-        <button id="btn-seq-play" class="primary">Play Sequence</button>
+        <button id="btn-seq-play" class="primary" title="Start or stop the 16-step pattern sequencer (switches queued patterns cleanly at Step 1)">Play Sequence</button>
         <button id="btn-seq-blank" title="Create a blank 16-step rest pattern">+ Blank Pattern</button>
         <button id="btn-seq-rec" title="Record incoming MIDI In or keyboard notes (A-K) into steps (Left-click selects step, Right-click clears)">● Rec to Pattern</button>
-        <label style="font-size:12px;color:var(--muted);">BPM:
+        <label style="font-size:12px;color:var(--muted);" title="Sequencer &amp; 24 PPQN MIDI Clock tempo in beats per minute (60–180)">BPM:
           <input id="seq-bpm" type="number" min="60" max="180" value="124" style="width:72px;padding:6px 8px;" />
         </label>
         <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Play a subtle click on beats 1, 5, 9, 13 while the sequencer runs">
@@ -269,7 +324,7 @@
         <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Send Section 2B step notes to MIDI Out (uncheck to run ATEK303's own pattern on Clock sync &amp; transpose live via keys A–K)">
           <input id="chk-seq-notes" type="checkbox" checked /> Send Seq Notes
         </label>
-        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Send MIDI Program Change (0xC0) matching the bank pattern number when switching patterns">
           <input id="chk-seq-pc" type="checkbox" checked /> Send MIDI Program Change on Switch
         </label>
         <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Send fm1-map Ch 16 Note 62 (SEQ) on bar boundary switch (requires mapped build)">
@@ -310,7 +365,7 @@
           <button type="button" class="track-jump-btn" data-ch="5">T5</button>
           <button type="button" class="track-jump-btn" data-ch="6">T6</button>
         </span>
-        <label style="font-size:11px;color:var(--muted);">Remote Ch:
+        <label style="font-size:11px;color:var(--muted);" title="MIDI channel configured under Skiff MENU › MIDI › REMOTE (default 16)">Remote Ch:
           <select id="skiff-remote-ch" style="padding:4px 6px;font-size:12px;">
             <option value="16" selected>16</option><option value="15">15</option>
             <option value="14">14</option><option value="10">10</option><option value="1">1</option>
@@ -323,16 +378,16 @@
         <button type="button" id="btn-skiff-rec-pat" class="primary" style="padding:5px 10px;font-size:12px;" title="Arms Skiff REMOTE REC (CC 113), starts clocked playback for 1 bar, streams the AI pattern into the selected Skiff Track (Ch 1–6), then disarms REC">⏺ Record Pattern → Skiff Track</button>
       </div>
       <div class="row" style="margin-bottom: 8px;">
-        <input id="seq-prompt" type="text" placeholder="Style or comment: e.g. 'Bach baroque arp', 'Devo synth-punk', 'calmer', 'more energetic'" style="flex:1;min-width:260px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;" />
-        <button id="btn-seq-gen" class="primary">Design New (AI)</button>
-        <button id="btn-seq-refine">Refine Active</button>
+        <input id="seq-prompt" type="text" placeholder="Style or comment: e.g. 'Bach baroque arp', 'Devo synth-punk', 'calmer', 'more energetic'" title="Describe a new 16-step sequence or an edit to apply to the active pattern" style="flex:1;min-width:260px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;" />
+        <button id="btn-seq-gen" class="primary" title="Ask local LLM to design a brand-new 16-step pattern from the prompt">Design New (AI)</button>
+        <button id="btn-seq-refine" title="Ask local LLM to modify the active pattern using your comment">Refine Active</button>
       </div>
       <div class="row" style="margin-bottom: 8px;">
         <span style="font-size:11px;color:var(--muted);">Quick refine:</span>
-        <button type="button" class="seq-chip" data-feedback="more energetic, busier 16th notes and accents" style="padding:4px 9px;font-size:11px;">More Energetic</button>
-        <button type="button" class="seq-chip" data-feedback="calmer, softer velocities and fewer notes" style="padding:4px 9px;font-size:11px;">Calmer</button>
-        <button type="button" class="seq-chip" data-feedback="more acid 303 slides and octave jumps" style="padding:4px 9px;font-size:11px;">More Slides</button>
-        <button type="button" class="seq-chip" data-feedback="more sparse and hypnotic with extra rests" style="padding:4px 9px;font-size:11px;">More Sparse</button>
+        <button type="button" class="seq-chip" data-feedback="more energetic, busier 16th notes and accents" style="padding:4px 9px;font-size:11px;" title="Refine active pattern with denser 16th notes and higher accents">More Energetic</button>
+        <button type="button" class="seq-chip" data-feedback="calmer, softer velocities and fewer notes" style="padding:4px 9px;font-size:11px;" title="Refine active pattern to be sparser and softer">Calmer</button>
+        <button type="button" class="seq-chip" data-feedback="more acid 303 slides and octave jumps" style="padding:4px 9px;font-size:11px;" title="Refine active pattern with more 303 slides and octave leaps">More Slides</button>
+        <button type="button" class="seq-chip" data-feedback="more sparse and hypnotic with extra rests" style="padding:4px 9px;font-size:11px;" title="Refine active pattern with extra rests and hypnotic repetition">More Sparse</button>
       </div>
       <div id="seq-steps" class="seq-steps"></div>
       <div id="seq-bank" class="seq-bank"></div>
@@ -344,40 +399,40 @@
         <span id="comp-badge" class="badge">No composition loaded</span>
       </div>
       <div class="row" style="margin-bottom: 8px;">
-        <input id="comp-prompt" type="text" placeholder="Motif / edit: e.g. 'James Bond minor spy brass + driving bass', 'more urgent bass'" style="flex:1;min-width:240px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;" />
+        <input id="comp-prompt" type="text" placeholder="Motif / edit: e.g. 'James Bond minor spy brass + driving bass', 'more urgent bass'" title="Describe a multi-track composition or requested edit for the local LLM" style="flex:1;min-width:240px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;" />
         <label style="font-size:12px;color:var(--muted);">Target:
           <select id="comp-target" title="Skiff builds 2–4 polyphonic channels; ATEK303 builds 1 monophonic acid/bass track">
             <option value="skiff" selected>Skiff (Multi-Track Ch 1–4)</option>
             <option value="atek303">ATEK303 (1-Track Acid/Bass)</option>
           </select>
         </label>
-        <label style="font-size:12px;color:var(--muted);">Beats:
+        <label style="font-size:12px;color:var(--muted);" title="Loop duration in quarter-note beats (4 beats = 1 bar, 8 = 2 bars, 16 = 4 bars)">Beats:
           <select id="comp-beats">
             <option value="4">4 beats</option>
             <option value="8" selected>8 beats</option>
             <option value="16">16 beats</option>
           </select>
         </label>
-        <button id="btn-comp-gen" class="primary">Generate JSON (AI)</button>
-        <button id="btn-comp-refine">Refine JSON</button>
+        <button id="btn-comp-gen" class="primary" title="Ask local LLM to generate a multi-track MIDI composition JSON using scientific note names">Generate JSON (AI)</button>
+        <button id="btn-comp-refine" title="Ask local LLM to revise the loaded composition JSON using your comment">Refine JSON</button>
         <button id="btn-comp-copy-guide" title="Copies hub/prompts/fm1-midi-composition.md rules to clipboard for external chats">Copy Skill Prompt</button>
       </div>
       <div class="row" style="margin-bottom: 8px;">
-        <button id="btn-comp-play" class="primary">▶ Play Composition</button>
-        <button id="btn-comp-stop">■ Stop</button>
+        <button id="btn-comp-play" class="primary" title="Play all unmuted composition tracks simultaneously on their assigned MIDI channels + WebAudio">▶ Play Composition</button>
+        <button id="btn-comp-stop" title="Stop composition playback and send All Notes Off (CC 123)">■ Stop</button>
         <button id="btn-comp-rec-skiff" class="primary" title="Arms Skiff REMOTE REC (CC 113), plays unmuted tracks with 24 PPQN clock for 1 loop, then disarms REC">⏺ Record → Skiff</button>
         <button id="btn-comp-push-atek" title="Converts the selected track and writes it directly to the chosen ATEK303 .flash slot">↑ Send Track → ATEK303</button>
         <button id="btn-comp-push-atek-all" title="Writes every track in this composition into consecutive ATEK303 .flash slots starting at the selected slot">↑ All Tracks → ATEK303</button>
-        <label style="font-size:12px;color:var(--muted);">Track:
+        <label style="font-size:12px;color:var(--muted);" title="Select which track in this composition to down-mix or push to ATEK303">Track:
           <select id="comp-track-select"></select>
         </label>
         <button id="btn-comp-to-seq" title="Down-mixes the selected track into Section 2B (16-step grid + ATEK303 .flash ready)">Load Track → 16-Step Grid</button>
         <button id="btn-comp-export-mid" title="Downloads a Standard MIDI File (.mid) with all tracks">Export .mid</button>
       </div>
       <div id="comp-tracks" class="comp-tracks"></div>
-      <textarea id="comp-json" class="comp-json" spellcheck="false" placeholder="Paste or generate FM-1 Multi-Track Composition JSON (note names like &quot;E4&quot;, &quot;F#3&quot;, &quot;Bb2&quot; supported; comments allowed on import)..."></textarea>
+      <textarea id="comp-json" class="comp-json" spellcheck="false" title="Edit or paste multi-track composition JSON (comments and code fences allowed on import)" placeholder="Paste or generate FM-1 Multi-Track Composition JSON (note names like &quot;E4&quot;, &quot;F#3&quot;, &quot;Bb2&quot; supported; comments allowed on import)..."></textarea>
       <div class="row" style="margin-top: 8px; justify-content: space-between;">
-        <button id="btn-comp-import">Import / Validate JSON</button>
+        <button id="btn-comp-import" title="Parse, validate, convert note names (&quot;E4&quot; → 64), and load JSON into track pills">Import / Validate JSON</button>
         <span style="font-size: 11px; color: var(--muted);">Skill rules: <code>hub/prompts/fm1-midi-composition.md</code> · Direct multi-channel MIDI TX + Skiff/ATEK/SMF export</span>
       </div>
     </section>
@@ -393,7 +448,7 @@
 
     <section id="sec-patch" class="card">
       <h2>4. Active Patch Telemetry &amp; Co-Pilot Macros</h2>
-      <div class="row" style="justify-content: space-between; margin-bottom: 12px;">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
         <div class="row">
           <span class="badge" title="Active patch name synced to WebAudio preview and FM-1 MIDI CCs">Patch: <b id="patch-name" style="margin-left:4px;">—</b></span>
           <span class="badge" title="FM operator routing topology (1–8) sent on Ch 1 CC 20 (fm1-map: ALGORITHM)">Algorithm: <b id="patch-algo" style="margin-left:4px;">—</b></span>
@@ -402,25 +457,29 @@
         <div class="row">
           <button id="btn-drift-down" title="Nudges modulator ratios (Op 2, Op 3, Op 4) down by -0.15x while keeping Carrier Op 1 locked in tune (CC 77/78)">Drift -0.15</button>
           <button id="btn-drift-up" title="Nudges modulator ratios (Op 2, Op 3, Op 4) up by +0.15x while keeping Carrier Op 1 locked in tune (CC 77/78)">Drift +0.15</button>
-          <button id="btn-roulette" title="Spins a new FM Algorithm (1–8) + timbre flavor (10 presets) with automatic carrier gain compensation (CC 20, CC 71, CC 7/74/75/76)">Algorithm Roulette</button>
-          <button id="btn-roulette-back" disabled title="Steps back to the previous Algorithm Roulette patch in history">← Roulette Back</button>
-          <input id="roulette-slider" type="range" min="0" max="100" value="100" disabled style="padding:0;width:130px;" title="Crossfades smoothly across Algorithm Roulette change history (ratios, levels, ADSR, feedback)" />
-          <span id="roulette-pos" style="font-size:12px;color:var(--muted);min-width:52px;" title="Current position along the Algorithm Roulette crossfade chain">—</span>
-          <select id="morph-slot" title="Selects which pre-warmed cache slot (0–3) to morph toward">
-            <option value="0">Morph → Slot 0</option>
-            <option value="1">Morph → Slot 1</option>
-            <option value="2">Morph → Slot 2</option>
-            <option value="3">Morph → Slot 3</option>
-          </select>
-          <input id="morph-slider" type="range" min="0" max="100" value="0" style="padding:0;width:110px;" title="Interpolates feedback, operator levels, ratios, and ADSR from the active patch toward the selected cache slot" />
-          <span id="morph-pct" style="font-size:12px;width:36px;" title="Current morph blend percentage (0% = active patch, 100% = target slot)">0%</span>
         </div>
+      </div>
+      <div class="row" style="margin-bottom: 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;">
+        <button id="btn-roulette" title="Spins a new FM Algorithm (1–8) + timbre flavor (10 presets) with automatic carrier gain compensation (CC 20, CC 71, CC 7/74/75/76)">Algorithm Roulette</button>
+        <button id="btn-roulette-back" disabled title="Steps back to the previous Algorithm Roulette patch in history">← Roulette Back</button>
+        <input id="roulette-slider" type="range" min="0" max="100" value="100" disabled style="flex:1;min-width:360px;padding:0;" title="Crossfades smoothly across Algorithm Roulette change history (ratios, levels, ADSR, feedback)" />
+        <span id="roulette-pos" style="font-size:12px;color:var(--muted);min-width:52px;" title="Current position along the Algorithm Roulette crossfade chain">—</span>
+      </div>
+      <div class="row" style="margin-bottom: 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;">
+        <select id="morph-slot" title="Selects which pre-warmed cache slot (0–3) to morph toward">
+          <option value="0">Morph → Slot 0</option>
+          <option value="1">Morph → Slot 1</option>
+          <option value="2">Morph → Slot 2</option>
+          <option value="3">Morph → Slot 3</option>
+        </select>
+        <input id="morph-slider" type="range" min="0" max="100" value="0" style="flex:1;min-width:360px;padding:0;" title="Interpolates feedback, operator levels, ratios, and ADSR from the active patch toward the selected cache slot" />
+        <span id="morph-pct" style="font-size:12px;width:40px;" title="Current morph blend percentage (0% = active patch, 100% = target slot)">0%</span>
       </div>
       <div class="row" style="margin-bottom: 12px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;">
         <button id="btn-smart-assign" class="primary" title="Asks Unsloth to assign 3 expressive FM parameters (e.g. feedback, op2.level, op2.decay) to the Smart Macro slider">AI Smart Macro Assign</button>
-        <input id="smart-slider" type="range" min="0" max="100" value="0" disabled style="padding:0;width:140px;" title="Sweeps all 3 AI-assigned FM parameters simultaneously across their min→max ranges" />
-        <span id="smart-pct" style="font-size:12px;width:36px;">0%</span>
-        <span id="smart-info" style="font-size:12px;color:var(--muted);">No Smart Macro assigned yet.</span>
+        <input id="smart-slider" type="range" min="0" max="100" value="0" disabled style="flex:1;min-width:480px;padding:0;" title="Sweeps all 3 AI-assigned FM parameters simultaneously across their min→max ranges" />
+        <span id="smart-pct" style="font-size:12px;width:40px;">0%</span>
+        <span id="smart-info" style="font-size:12px;color:var(--muted);width:100%;">No Smart Macro assigned yet.</span>
       </div>
       <div class="row" style="margin-bottom: 12px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;">
         <button id="btn-fav-save" class="primary" title="Saves the active patch JSON to hub/patches/ on disk for instant recall">Save Active Patch</button>
@@ -443,10 +502,10 @@
       <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
         <h2 style="margin: 0;">5. Live Debugging Console</h2>
         <div class="row">
-          <label style="font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+          <label style="font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; cursor: pointer;" title="Automatically scroll the debugging console as new events arrive">
             <input id="chk-autoscroll" type="checkbox" checked /> Auto-scroll
           </label>
-          <button id="btn-clear-logs" style="padding: 5px 10px; font-size: 12px;">Clear</button>
+          <button id="btn-clear-logs" style="padding: 5px 10px; font-size: 12px;" title="Clear the Live Debugging Console buffer">Clear</button>
         </div>
       </div>
       <div id="debug-console" class="console-box"></div>
@@ -1448,6 +1507,76 @@
       clientLog('info', 'skiff-remote', `Completed 1-bar clocked record of "${entry.pattern.patternName}" -> Skiff Ch ${trackChNum}`);
     };
 
+    const topJumpState = { bank: 0, presets: [] };
+
+    const updateTopJumpBadge = () => {
+      const badge = byId('top-jump-badge');
+      if (!badge) return;
+      const ch = Number(byId('midi-ch-select')?.value || 1);
+      const slotNum = Number(byId('atek-slot-select')?.value || 1);
+      const slotInfo = topJumpState.presets.find((p) => p.slot === slotNum);
+      const slotText = slotInfo?.used
+        ? `#${String(slotNum).padStart(2, '0')} ${slotInfo.name}`
+        : `#${String(slotNum).padStart(2, '0')}`;
+      badge.textContent = `Track T${ch} (Ch ${ch}) · Slot ${slotText}`;
+    };
+
+    const renderTopSlotGrid = () => {
+      const grid = byId('top-slot-grid');
+      if (!grid) return;
+      const b1 = byId('btn-slot-bank-1');
+      const b2 = byId('btn-slot-bank-2');
+      if (b1) b1.className = topJumpState.bank === 0 ? 'primary' : '';
+      if (b2) b2.className = topJumpState.bank === 1 ? 'primary' : '';
+
+      const presets = topJumpState.presets || [];
+      const startSlot = topJumpState.bank * 16 + 1;
+      const activeSlot = Number(byId('atek-slot-select')?.value || 1);
+      const slice = Array.from({ length: 16 }, (_, idx) => {
+        const s = startSlot + idx;
+        return presets.find((p) => p.slot === s) || { slot: s, used: false, name: '', bpm: null };
+      });
+
+      grid.innerHTML = slice.map((p) => {
+        const isSel = p.slot === activeSlot;
+        const sub = p.used
+          ? `${p.name} (${p.bpm || '?'} BPM)`
+          : (p.slot <= 12 ? 'Factory ROM' : 'Empty');
+        const cls = [
+          'top-slot-pad',
+          p.used ? 'saved' : (p.slot > 12 ? 'empty' : ''),
+          isSel ? 'selected' : '',
+        ].filter(Boolean).join(' ');
+        const tip = p.used
+          ? `Slot #${p.slot}: ${escHtml(p.name)} (${p.bpm || '?'} BPM) — Left-click: Pull/Queue in Hub · Right-click: Activate in ATEK303`
+          : `Slot #${p.slot} (${sub}) — Click to select as ATEK303 push target`;
+        return `<button type="button" class="${cls}" data-top-slot="${p.slot}" data-used="${p.used ? '1' : '0'}" title="${tip}"><span class="top-slot-num">#${String(p.slot).padStart(2, '0')}</span><span class="top-slot-name">${escHtml(sub)}</span></button>`;
+      }).join('');
+
+      grid.querySelectorAll('[data-top-slot]').forEach((btn) => {
+        const slotNum = Number(btn.dataset.topSlot);
+        const isUsed = btn.dataset.used === '1';
+        btn.addEventListener('click', () => {
+          const sel = byId('atek-slot-select');
+          if (sel) sel.value = String(slotNum);
+          if (isUsed) {
+            pullAtekSlot(slotNum);
+          } else {
+            refreshAtekFlashPresets(slotNum);
+            setLog(`Selected Slot #${slotNum} as ATEK303 push target`);
+          }
+        });
+        btn.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          if (!isUsed) return;
+          const sel = byId('atek-slot-select');
+          if (sel) sel.value = String(slotNum);
+          jumpAtekToSlot(slotNum);
+        });
+      });
+      updateTopJumpBadge();
+    };
+
     const refreshAtekFlashPresets = async (selectSlot = null) => {
       try {
         const data = await api('/atek/flash/presets');
@@ -1456,6 +1585,7 @@
         const padsEl = byId('atek-slot-pads');
         if (!sel) return 0;
         const presets = data.presets || [];
+        topJumpState.presets = presets;
         const savedSlots = presets.filter((p) => p.used);
         if (countEl) {
           countEl.textContent = `${savedSlots.length} saved in .flash`;
@@ -1506,6 +1636,7 @@
             });
           });
         }
+        renderTopSlotGrid();
         return savedSlots.length;
       } catch {
         return 0;
@@ -1978,17 +2109,33 @@
         chSel.value = String(nextCh);
       }
       const activeCh = Number(chSel?.value || 1);
-      document.querySelectorAll('#skiff-track-jumps .track-jump-btn').forEach((btn) => {
+      document.querySelectorAll('#skiff-track-jumps .track-jump-btn, #top-track-grid .top-track-btn').forEach((btn) => {
         btn.classList.toggle('active', Number(btn.dataset.ch) === activeCh);
       });
+      updateTopJumpBadge();
     };
 
-    document.querySelectorAll('#skiff-track-jumps .track-jump-btn').forEach((btn) => {
+    document.querySelectorAll('#skiff-track-jumps .track-jump-btn, #top-track-grid .top-track-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const ch = Number(btn.dataset.ch || 1);
         syncSkiffTrackJumps(ch);
         setLog(`Jumped MIDI Channel -> Track T${ch} (Ch ${ch})`);
       });
+    });
+
+    byId('btn-slot-bank-1').addEventListener('click', () => {
+      topJumpState.bank = 0;
+      renderTopSlotGrid();
+    });
+
+    byId('btn-slot-bank-2').addEventListener('click', () => {
+      topJumpState.bank = 1;
+      renderTopSlotGrid();
+    });
+
+    byId('btn-top-refresh').addEventListener('click', async () => {
+      const count = await refreshAtekFlashPresets();
+      setLog(`Refreshed saves/04_atek303.flash (${count} saved preset${count === 1 ? '' : 's'} found)`);
     });
 
     byId('midi-ch-select').addEventListener('change', () => {
@@ -2493,6 +2640,83 @@
       }
     });
 
+    const TOOLTIP_PREF_KEY = 'fm1_tooltips_enabled';
+    const tooltipRef = { enabled: true, syncing: false };
+
+    const syncTooltipNode = (el, enabled) => {
+      if (!el || el.nodeType !== 1 || el.dataset?.keepTip === 'true') return;
+      if (!enabled) {
+        if (el.hasAttribute('title')) {
+          el.dataset.tip = el.getAttribute('title');
+          el.removeAttribute('title');
+        }
+      } else if (!el.hasAttribute('title') && el.dataset?.tip) {
+        el.setAttribute('title', el.dataset.tip);
+      }
+    };
+
+    const applyTooltipsEnabled = (enabled, persist = true) => {
+      tooltipRef.enabled = Boolean(enabled);
+      tooltipRef.syncing = true;
+      try {
+        const chk = byId('chk-tooltips');
+        if (chk) chk.checked = tooltipRef.enabled;
+        document.querySelectorAll('[title], [data-tip]').forEach((el) => {
+          syncTooltipNode(el, tooltipRef.enabled);
+        });
+        if (persist) {
+          try {
+            localStorage.setItem(TOOLTIP_PREF_KEY, tooltipRef.enabled ? '1' : '0');
+          } catch {}
+        }
+      } finally {
+        tooltipRef.syncing = false;
+      }
+    };
+
+    const initTooltipToggle = () => {
+      let initial = true;
+      try {
+        initial = localStorage.getItem(TOOLTIP_PREF_KEY) !== '0';
+      } catch {}
+      applyTooltipsEnabled(initial, false);
+
+      const chk = byId('chk-tooltips');
+      if (chk) {
+        chk.addEventListener('change', () => {
+          applyTooltipsEnabled(chk.checked, true);
+          setLog(`Hover tooltips ${chk.checked ? 'enabled' : 'disabled'}`);
+        });
+      }
+
+      const observer = new MutationObserver((mutations) => {
+        if (tooltipRef.syncing || tooltipRef.enabled) return;
+        tooltipRef.syncing = true;
+        try {
+          mutations.forEach((m) => {
+            if (m.type === 'attributes' && m.attributeName === 'title') {
+              syncTooltipNode(m.target, false);
+            } else if (m.type === 'childList') {
+              m.addedNodes.forEach((node) => {
+                if (node.nodeType !== 1) return;
+                syncTooltipNode(node, false);
+                node.querySelectorAll?.('[title]').forEach((child) => syncTooltipNode(child, false));
+              });
+            }
+          });
+        } finally {
+          tooltipRef.syncing = false;
+        }
+      });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['title'],
+      });
+    };
+
+    initTooltipToggle();
     initMidi();
     initOptions().then(refresh);
     setInterval(refresh, 500);
