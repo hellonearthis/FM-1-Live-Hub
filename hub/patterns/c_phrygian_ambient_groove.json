@@ -1,0 +1,109 @@
+{
+  "id": "c_phrygian_ambient_groove",
+  "builtin": false,
+  "style": "calmer, softer velocities and fewer notes",
+  "savedAt": "2026-11-25T06:43:36.925Z",
+  "pattern": {
+    "patternName": "C Phrygian Ambient Groove",
+    "bpm": 138,
+    "rootKey": "C Phrygian",
+    "steps": [
+      {
+        "note": 24,
+        "velocity": 95,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 100,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 105,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 100,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 31,
+        "velocity": 105,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 95,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 100,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 105,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 110,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 95,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 31,
+        "velocity": 100,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 105,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 100,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 95,
+        "accent": false,
+        "slide": false
+      }
+    ]
+  }
+}

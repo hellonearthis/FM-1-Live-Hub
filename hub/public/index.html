@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FM-1 + MCP + Unsloth Live Hub</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #141923;
+      --panel-2: #1b2230;
+      --border: #283246;
+      --text: #e6ecf5;
+      --muted: #8b98b0;
+      --accent: #38bdf8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 16px; }
+    header {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: 12px; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px;
+    }
+    h1 { margin: 0; font-size: 18px; letter-spacing: 0.4px; }
+    .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      background: var(--panel-2); border: 1px solid var(--border);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot.warn { background: var(--amber); }
+    .dot.err { background: var(--red); }
+
+    .card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--muted);
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    select, button, input[type="range"] {
+      background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 7px; padding: 8px 12px; font-size: 13px;
+    }
+    button { cursor: pointer; font-weight: 600; transition: border-color 0.15s, background 0.15s; }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button.primary { background: #0ea5e9; border-color: #0ea5e9; color: #05131f; }
+    button.danger { background: #3f181d; border-color: #7f1d1d; color: #fecaca; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .slot {
+      background: var(--panel-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .slot-head { display: flex; justify-content: space-between; align-items: center; }
+    .slot-role { font-weight: 700; font-size: 14px; }
+    .slot-err { font-size: 11px; color: #fca5a5; min-height: 16px; word-break: break-word; }
+
+    .ops-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .op {
+      background: var(--panel-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px;
+    }
+    .op-title { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 8px; font-size: 13px; }
+    .bar-bg { height: 7px; background: #0d1118; border-radius: 4px; overflow: hidden; margin: 4px 0 8px 0; }
+    .bar-fill { height: 100%; background: var(--accent); transition: width 0.15s; }
+    .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 12px; color: var(--muted); }
+    .kv b { color: var(--text); }
+    .log { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .console-box {
+      height: 220px; overflow-y: auto; background: #080b10;
+      border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px;
+      font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.5;
+    }
+    .log-line { white-space: pre-wrap; word-break: break-word; }
+    .log-ts { color: #64748b; }
+    .log-src { color: var(--accent); font-weight: 600; }
+    .log-info { color: #cbd5e1; }
+    .log-warn { color: #fbbf24; }
+    .log-error { color: #f87171; }
+    .fx-grid {
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px; margin-top: 12px;
+    }
+    .fx-pad {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+      padding: 10px; border-radius: 8px; background: var(--panel-2);
+      border: 1px solid var(--border); color: var(--text);
+      text-align: left; user-select: none; touch-action: none;
+    }
+    .fx-pad:hover { border-color: var(--fx-accent, var(--accent)); }
+    .fx-pad.is-default {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px var(--green) inset;
+      background: rgba(34, 197, 94, 0.14);
+    }
+    .fx-pad.active {
+      border-color: var(--fx-accent, var(--accent));
+      background: color-mix(in srgb, var(--fx-accent, var(--accent)) 22%, var(--panel-2));
+      box-shadow: 0 0 12px color-mix(in srgb, var(--fx-accent, var(--accent)) 45%, transparent);
+    }
+    .fx-pad-name { font-size: 13px; font-weight: 700; }
+    .fx-pad-style {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--fx-accent, var(--muted)); font-weight: 600;
+    }
+    .seq-steps {
+      display: grid; grid-template-columns: repeat(16, minmax(0, 1fr));
+      gap: 4px; margin: 10px 0;
+    }
+    .seq-step {
+      background: #0d1118; border: 1px solid var(--border); border-radius: 5px;
+      padding: 6px 2px; text-align: center; font-size: 11px; color: var(--muted);
+      cursor: pointer; user-select: none;
+    }
+    .seq-step.has-note { color: var(--text); border-color: #3b4b68; }
+    .seq-step.accent { border-top: 2px solid var(--amber); }
+    .seq-step.slide { border-bottom: 2px solid var(--accent); }
+    .seq-step.rec-cursor { outline: 2px solid #f43f5e; border-color: #f43f5e; color: #fecdd3; }
+    .seq-step.playhead { background: #0ea5e9; color: #05131f; font-weight: 700; border-color: #38bdf8; }
+    button.recording { background: #dc2626; border-color: #f87171; color: #fff; }
+    .seq-bank { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pat-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px;
+      border-radius: 7px; font-size: 12px; background: var(--panel-2); border: 1px solid var(--border);
+    }
+    .pat-btn.active { border-color: var(--green); background: rgba(34, 197, 94, 0.14); }
+    .pat-btn.queued { border-color: var(--amber); background: rgba(245, 158, 11, 0.16); }
+    .comp-tracks { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .comp-track-pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+      border-radius: 7px; font-size: 12px; background: var(--panel-2); border: 1px solid var(--border);
+    }
+    .comp-track-pill.muted { opacity: 0.5; }
+    .comp-track-pill.active-track { border-color: var(--accent); background: rgba(56, 189, 248, 0.14); }
+    .comp-json {
+      width: 100%; min-height: 128px; background: #080b10; color: #cbd5e1;
+      border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px;
+      font-family: Consolas, 'Courier New', monospace; font-size: 12px; resize: vertical;
+    }
+    .jump-nav {
+      position: sticky; top: 8px; z-index: 20;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      background: rgba(20, 25, 35, 0.94); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px;
+    }
+    .jump-btn { padding: 4px 10px; font-size: 11px; border-radius: 999px; }
+    .slot-pads { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
+    .slot-pad { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+    .slot-pad.active { border-color: var(--green); background: rgba(34, 197, 94, 0.16); color: #dcfce7; }
+    .slot-pad.empty-next { border-style: dashed; color: var(--accent); }
+    .track-jump-btn { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
+    .track-jump-btn.active { border-color: var(--accent); background: rgba(56, 189, 248, 0.18); color: #e0f2fe; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>FM-1 Live Hub &amp; AI Patch Deck</h1>
+        <div class="sub">Hardware Emulator Control + 4-Slot Unsloth Cache + Active FM Telemetry</div>
+      </div>
+      <div class="row">
+        <span class="badge"><span id="fm1-dot" class="dot"></span><span id="fm1-badge">FM-1: Stopped</span></span>
+        <span class="badge"><span id="hub-dot" class="dot on"></span><span id="hub-badge">Style: None (Epoch 0)</span></span>
+        <button id="btn-devtools" style="display:none;padding:5px 10px;font-size:12px;">DevTools (F12)</button>
+      </div>
+    </header>
+
+    <nav class="jump-nav" aria-label="Quick section jump">
+      <span style="font-size:11px;color:var(--muted);font-weight:700;margin-right:2px;">Jump:</span>
+      <button type="button" class="jump-btn" data-jump="sec-fm1">1. FM-1</button>
+      <button type="button" class="jump-btn" data-jump="sec-midi">2. MIDI</button>
+      <button type="button" class="jump-btn" data-jump="sec-seq">2B. Seq &amp; ATEK Slots</button>
+      <button type="button" class="jump-btn" data-jump="sec-comp">2C. Tracks / JSON</button>
+      <button type="button" class="jump-btn" data-jump="sec-slots">3. AI Slots</button>
+      <button type="button" class="jump-btn" data-jump="sec-patch">4. Patch &amp; FX</button>
+      <button type="button" class="jump-btn" data-jump="sec-logs">5. Logs</button>
+    </nav>
+
+    <section id="sec-fm1" class="card">
+      <h2>1. FM-1 Hardware Emulator Window</h2>
+      <div class="row">
+        <select id="fw-select"></select>
+        <select id="mhz-select">
+          <option value="240">240 MHz</option>
+          <option value="160">160 MHz</option>
+          <option value="120">120 MHz</option>
+          <option value="320">320 MHz</option>
+        </select>
+        <button id="btn-launch" class="primary">Open FM-1 Window</button>
+        <button id="btn-stop" class="danger">Stop FM-1</button>
+      </div>
+    </section>
+
+    <section id="sec-midi" class="card">
+      <h2>2. MIDI Hardware &amp; Synth Bridge (loopMIDI / Real Hardware)</h2>
+      <div class="row" style="margin-bottom: 10px;">
+        <label style="font-size:12px;color:var(--muted);">MIDI In:
+          <select id="midi-in-select"><option value="">None</option></select>
+        </label>
+        <label style="font-size:12px;color:var(--muted);">MIDI Out:
+          <select id="midi-out-select"><option value="">None</option></select>
+        </label>
+        <label style="font-size:12px;color:var(--muted);">Ch:
+          <select id="midi-ch-select">
+            <option value="1">1</option><option value="2">2</option>
+            <option value="3">3</option><option value="4">4</option>
+            <option value="5">5</option><option value="6">6</option>
+            <option value="10">10</option>
+          </select>
+        </label>
+        <label style="font-size:12px;color:var(--muted);" title="ATEK303 locks CC 78 Tuning; Skiff sends per-track Brightness/Res/ADSR &amp; FX sends">CC Mode:
+          <select id="midi-profile-select">
+            <option value="atek303" selected>ATEK303 (Safe Tuning)</option>
+            <option value="skiff">Skiff (6-Track / FX Sends)</option>
+            <option value="fm">4-Op FM Generic</option>
+          </select>
+        </label>
+        <label style="font-size:12px;color:var(--muted);" title="ATEK303 CC 79 Wave Selector (14 oscillators)">Wave:
+          <select id="atek-wave-select">
+            <option value="">Auto (Follow Patch)</option>
+          </select>
+        </label>
+        <button id="btn-midi-rescan">Rescan MIDI</button>
+      </div>
+      <div class="row">
+        <button id="btn-send-ccs" class="primary">Send Patch CCs Now</button>
+        <button id="btn-test-riff">Play Test Acid Riff</button>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+          <input id="chk-webaudio" type="checkbox" checked /> Local 4-Op FM Preview (Keys A–K)
+        </label>
+      </div>
+    </section>
+
+    <section id="sec-seq" class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <h2 style="margin: 0;">2B. 16-Step Pattern Sequencer (End-of-Sequence Switching)</h2>
+        <span id="seq-badge" class="badge">Stopped (Step 1/16)</span>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <button id="btn-seq-play" class="primary">Play Sequence</button>
+        <button id="btn-seq-blank" title="Create a blank 16-step rest pattern">+ Blank Pattern</button>
+        <button id="btn-seq-rec" title="Record incoming MIDI In or keyboard notes (A-K) into steps (Left-click selects step, Right-click clears)">● Rec to Pattern</button>
+        <label style="font-size:12px;color:var(--muted);">BPM:
+          <input id="seq-bpm" type="number" min="60" max="180" value="124" style="width:72px;padding:6px 8px;" />
+        </label>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Play a subtle click on beats 1, 5, 9, 13 while the sequencer runs">
+          <input id="chk-seq-metro" type="checkbox" checked /> Metronome
+        </label>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Send 24 PPQN MIDI Clock (0xF8) + Start (0xFA) / Stop (0xFC) to lock ATEK303 &amp; delays to Hub BPM">
+          <input id="chk-seq-clock" type="checkbox" checked /> MIDI Clock (24 PPQN)
+        </label>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Send Section 2B step notes to MIDI Out (uncheck to run ATEK303's own pattern on Clock sync &amp; transpose live via keys A–K)">
+          <input id="chk-seq-notes" type="checkbox" checked /> Send Seq Notes
+        </label>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+          <input id="chk-seq-pc" type="checkbox" checked /> Send MIDI Program Change on Switch
+        </label>
+        <label style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Send fm1-map Ch 16 Note 62 (SEQ) on bar boundary switch (requires mapped build)">
+          <input id="chk-seq-fm1btn" type="checkbox" /> Tap FM-1 SEQ on Bar Switch
+        </label>
+        <button id="btn-seq-del" class="danger" title="Delete selected custom/AI pattern (Delete key)">Delete Selected</button>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <span style="font-size:11px;color:var(--muted);" title="Requires an fm1-live / device build supporting fm1-hub-map.json Ch 16/15 mappings">ATEK303 / FM-1 Panel:</span>
+        <button type="button" id="btn-fm1-play" style="padding:5px 10px;font-size:12px;" title="Ch 16 Note 60 (PLAY)">FM-1 PLAY</button>
+        <button type="button" id="btn-fm1-seq" style="padding:5px 10px;font-size:12px;" title="Ch 16 Note 62 (SEQ: generate / mutate if LOCKed)">FM-1 SEQ (Gen)</button>
+        <button type="button" id="btn-fm1-rec" style="padding:5px 10px;font-size:12px;" title="Ch 16 Note 61 (REC: undo last mutation/edit in ATEK303)">FM-1 REC (Undo)</button>
+        <button type="button" id="btn-fm1-env" style="padding:5px 10px;font-size:12px;" title="Ch 16 Note 68 (ENV: mutate TIME on visible page)">ENV (Time)</button>
+        <button type="button" id="btn-fm1-lfo" style="padding:5px 10px;font-size:12px;" title="Ch 16 Note 69 (LFO: mutate NOTES/octaves)">LFO (Notes)</button>
+        <button type="button" id="btn-fm1-arp" style="padding:5px 10px;font-size:12px;" title="Ch 16 Note 70 / 63 (ARP: mutate SLIDES &amp; ACCENTS)">ARP (Acc/Sld)</button>
+        <button type="button" id="btn-fm1-preload" style="padding:5px 10px;font-size:12px;" title="Opens ATEK303 Step Editor (EDIT, Note 66), steps Ch 15 panel keys, then exits via HOME (Note 65)">⏺ Preload → EDIT</button>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <span style="font-size:11px;color:var(--muted);" title="Bidirectional sync with saves/04_atek303.flash (AT64 presets 1–32)">ATEK303 .flash Sync:</span>
+        <select id="atek-slot-select" style="min-width:225px;padding:5px 8px;font-size:12px;" title="Choose ATEK303 preset slot (1–32) to push into or pull back from"></select>
+        <span id="atek-flash-count" class="badge" style="font-size:11px;"></span>
+        <button type="button" id="btn-atek-refresh" style="padding:5px 9px;font-size:12px;" title="Re-read saves/04_atek303.flash from disk to pick up newly saved ATEK303 presets">↻ Refresh</button>
+        <button type="button" id="btn-atek-push" style="padding:5px 10px;font-size:12px;" title="Writes the active Hub pattern + Filter/Reso/Decay/Accent into saves/04_atek303.flash">↑ Push Pattern → ATEK303 Slot</button>
+        <button type="button" id="btn-atek-pull" style="padding:5px 10px;font-size:12px;" title="Reads this slot from saves/04_atek303.flash into Section 2B for editing or AI refinement">↓ Pull ATEK303 Slot → Hub</button>
+        <button type="button" id="btn-atek-jump" class="primary" style="padding:5px 10px;font-size:12px;" title="Sets this saved flash slot as ATEK303 active pattern and reloads ATEK303">⚡ Jump ATEK303 → Slot</button>
+        <label style="font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Restart running ATEK303 automatically after pushing to .flash so it loads the new track right away">
+          <input id="chk-atek-reload" type="checkbox" checked /> Auto-Reload ATEK303
+        </label>
+      </div>
+      <div id="atek-slot-pads" class="slot-pads"></div>
+      <div class="row" style="margin-bottom: 8px;">
+        <span style="font-size:11px;color:var(--muted);" title="Works natively inside Skiff v2.7.2 via MENU › MIDI › REMOTE without --map">Skiff Native REMOTE:</span>
+        <span id="skiff-track-jumps" class="row" style="gap:4px;" title="Jump active MIDI Track Channel (T1–T6) for Skiff">
+          <button type="button" class="track-jump-btn active" data-ch="1">T1</button>
+          <button type="button" class="track-jump-btn" data-ch="2">T2</button>
+          <button type="button" class="track-jump-btn" data-ch="3">T3</button>
+          <button type="button" class="track-jump-btn" data-ch="4">T4</button>
+          <button type="button" class="track-jump-btn" data-ch="5">T5</button>
+          <button type="button" class="track-jump-btn" data-ch="6">T6</button>
+        </span>
+        <label style="font-size:11px;color:var(--muted);">Remote Ch:
+          <select id="skiff-remote-ch" style="padding:4px 6px;font-size:12px;">
+            <option value="16" selected>16</option><option value="15">15</option>
+            <option value="14">14</option><option value="10">10</option><option value="1">1</option>
+          </select>
+        </label>
+        <button type="button" id="btn-skiff-play" style="padding:5px 10px;font-size:12px;" title="Skiff REMOTE CC 112 (PLAY)">Skiff PLAY</button>
+        <button type="button" id="btn-skiff-rec" style="padding:5px 10px;font-size:12px;" title="Skiff REMOTE CC 113 (REC)">Skiff REC</button>
+        <button type="button" id="btn-skiff-edit" style="padding:5px 10px;font-size:12px;" title="Skiff REMOTE CC 106 (EDIT)">Skiff EDIT</button>
+        <button type="button" id="btn-skiff-save" style="padding:5px 10px;font-size:12px;" title="Skiff REMOTE CC 109 (SAVE)">Skiff SAVE</button>
+        <button type="button" id="btn-skiff-rec-pat" class="primary" style="padding:5px 10px;font-size:12px;" title="Arms Skiff REMOTE REC (CC 113), starts clocked playback for 1 bar, streams the AI pattern into the selected Skiff Track (Ch 1–6), then disarms REC">⏺ Record Pattern → Skiff Track</button>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <input id="seq-prompt" type="text" placeholder="Style or comment: e.g. 'Bach baroque arp', 'Devo synth-punk', 'calmer', 'more energetic'" style="flex:1;min-width:260px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;" />
+        <button id="btn-seq-gen" class="primary">Design New (AI)</button>
+        <button id="btn-seq-refine">Refine Active</button>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <span style="font-size:11px;color:var(--muted);">Quick refine:</span>
+        <button type="button" class="seq-chip" data-feedback="more energetic, busier 16th notes and accents" style="padding:4px 9px;font-size:11px;">More Energetic</button>
+        <button type="button" class="seq-chip" data-feedback="calmer, softer velocities and fewer notes" style="padding:4px 9px;font-size:11px;">Calmer</button>
+        <button type="button" class="seq-chip" data-feedback="more acid 303 slides and octave jumps" style="padding:4px 9px;font-size:11px;">More Slides</button>
+        <button type="button" class="seq-chip" data-feedback="more sparse and hypnotic with extra rests" style="padding:4px 9px;font-size:11px;">More Sparse</button>
+      </div>
+      <div id="seq-steps" class="seq-steps"></div>
+      <div id="seq-bank" class="seq-bank"></div>
+    </section>
+
+    <section id="sec-comp" class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <h2 style="margin: 0;">2C. Multi-Track MIDI Composition (Skiff / ATEK303 / JSON)</h2>
+        <span id="comp-badge" class="badge">No composition loaded</span>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <input id="comp-prompt" type="text" placeholder="Motif / edit: e.g. 'James Bond minor spy brass + driving bass', 'more urgent bass'" style="flex:1;min-width:240px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;" />
+        <label style="font-size:12px;color:var(--muted);">Target:
+          <select id="comp-target" title="Skiff builds 2–4 polyphonic channels; ATEK303 builds 1 monophonic acid/bass track">
+            <option value="skiff" selected>Skiff (Multi-Track Ch 1–4)</option>
+            <option value="atek303">ATEK303 (1-Track Acid/Bass)</option>
+          </select>
+        </label>
+        <label style="font-size:12px;color:var(--muted);">Beats:
+          <select id="comp-beats">
+            <option value="4">4 beats</option>
+            <option value="8" selected>8 beats</option>
+            <option value="16">16 beats</option>
+          </select>
+        </label>
+        <button id="btn-comp-gen" class="primary">Generate JSON (AI)</button>
+        <button id="btn-comp-refine">Refine JSON</button>
+        <button id="btn-comp-copy-guide" title="Copies hub/prompts/fm1-midi-composition.md rules to clipboard for external chats">Copy Skill Prompt</button>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <button id="btn-comp-play" class="primary">▶ Play Composition</button>
+        <button id="btn-comp-stop">■ Stop</button>
+        <button id="btn-comp-rec-skiff" class="primary" title="Arms Skiff REMOTE REC (CC 113), plays unmuted tracks with 24 PPQN clock for 1 loop, then disarms REC">⏺ Record → Skiff</button>
+        <button id="btn-comp-push-atek" title="Converts the selected track and writes it directly to the chosen ATEK303 .flash slot">↑ Send Track → ATEK303</button>
+        <button id="btn-comp-push-atek-all" title="Writes every track in this composition into consecutive ATEK303 .flash slots starting at the selected slot">↑ All Tracks → ATEK303</button>
+        <label style="font-size:12px;color:var(--muted);">Track:
+          <select id="comp-track-select"></select>
+        </label>
+        <button id="btn-comp-to-seq" title="Down-mixes the selected track into Section 2B (16-step grid + ATEK303 .flash ready)">Load Track → 16-Step Grid</button>
+        <button id="btn-comp-export-mid" title="Downloads a Standard MIDI File (.mid) with all tracks">Export .mid</button>
+      </div>
+      <div id="comp-tracks" class="comp-tracks"></div>
+      <textarea id="comp-json" class="comp-json" spellcheck="false" placeholder="Paste or generate FM-1 Multi-Track Composition JSON (note names like &quot;E4&quot;, &quot;F#3&quot;, &quot;Bb2&quot; supported; comments allowed on import)..."></textarea>
+      <div class="row" style="margin-top: 8px; justify-content: space-between;">
+        <button id="btn-comp-import">Import / Validate JSON</button>
+        <span style="font-size: 11px; color: var(--muted);">Skill rules: <code>hub/prompts/fm1-midi-composition.md</code> · Direct multi-channel MIDI TX + Skiff/ATEK/SMF export</span>
+      </div>
+    </section>
+
+    <section id="sec-slots" class="card">
+      <h2>3. AI Music Style &amp; 4-Slot Zero-Latency Cache</h2>
+      <div class="row" style="margin-bottom: 12px;">
+        <select id="style-select" title="Selects the AI genre skill prompt used by Unsloth to pre-generate patches"></select>
+        <button id="btn-warm" class="primary" title="Loads the selected genre skill and warms all 4 patch slots (Bass, Lead, Pad, Perc) in the background for 0 ms switching">Load Style &amp; Warm 4 Slots</button>
+      </div>
+      <div id="slots-grid" class="slots-grid"></div>
+    </section>
+
+    <section id="sec-patch" class="card">
+      <h2>4. Active Patch Telemetry &amp; Co-Pilot Macros</h2>
+      <div class="row" style="justify-content: space-between; margin-bottom: 12px;">
+        <div class="row">
+          <span class="badge" title="Active patch name synced to WebAudio preview and FM-1 MIDI CCs">Patch: <b id="patch-name" style="margin-left:4px;">—</b></span>
+          <span class="badge" title="FM operator routing topology (1–8) sent on Ch 1 CC 20 (fm1-map: ALGORITHM)">Algorithm: <b id="patch-algo" style="margin-left:4px;">—</b></span>
+          <span class="badge" title="Modulator self-feedback grit &amp; brightness (0.00–1.00) sent on Ch 1 CC 71 (fm1-map: KNOB2)">Feedback: <b id="patch-fb" style="margin-left:4px;">—</b></span>
+        </div>
+        <div class="row">
+          <button id="btn-drift-down" title="Nudges modulator ratios (Op 2, Op 3, Op 4) down by -0.15x while keeping Carrier Op 1 locked in tune (CC 77/78)">Drift -0.15</button>
+          <button id="btn-drift-up" title="Nudges modulator ratios (Op 2, Op 3, Op 4) up by +0.15x while keeping Carrier Op 1 locked in tune (CC 77/78)">Drift +0.15</button>
+          <button id="btn-roulette" title="Spins a new FM Algorithm (1–8) + timbre flavor (10 presets) with automatic carrier gain compensation (CC 20, CC 71, CC 7/74/75/76)">Algorithm Roulette</button>
+          <button id="btn-roulette-back" disabled title="Steps back to the previous Algorithm Roulette patch in history">← Roulette Back</button>
+          <input id="roulette-slider" type="range" min="0" max="100" value="100" disabled style="padding:0;width:130px;" title="Crossfades smoothly across Algorithm Roulette change history (ratios, levels, ADSR, feedback)" />
+          <span id="roulette-pos" style="font-size:12px;color:var(--muted);min-width:52px;" title="Current position along the Algorithm Roulette crossfade chain">—</span>
+          <select id="morph-slot" title="Selects which pre-warmed cache slot (0–3) to morph toward">
+            <option value="0">Morph → Slot 0</option>
+            <option value="1">Morph → Slot 1</option>
+            <option value="2">Morph → Slot 2</option>
+            <option value="3">Morph → Slot 3</option>
+          </select>
+          <input id="morph-slider" type="range" min="0" max="100" value="0" style="padding:0;width:110px;" title="Interpolates feedback, operator levels, ratios, and ADSR from the active patch toward the selected cache slot" />
+          <span id="morph-pct" style="font-size:12px;width:36px;" title="Current morph blend percentage (0% = active patch, 100% = target slot)">0%</span>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom: 12px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;">
+        <button id="btn-smart-assign" class="primary" title="Asks Unsloth to assign 3 expressive FM parameters (e.g. feedback, op2.level, op2.decay) to the Smart Macro slider">AI Smart Macro Assign</button>
+        <input id="smart-slider" type="range" min="0" max="100" value="0" disabled style="padding:0;width:140px;" title="Sweeps all 3 AI-assigned FM parameters simultaneously across their min→max ranges" />
+        <span id="smart-pct" style="font-size:12px;width:36px;">0%</span>
+        <span id="smart-info" style="font-size:12px;color:var(--muted);">No Smart Macro assigned yet.</span>
+      </div>
+      <div class="row" style="margin-bottom: 12px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;">
+        <button id="btn-fav-save" class="primary" title="Saves the active patch JSON to hub/patches/ on disk for instant recall">Save Active Patch</button>
+        <select id="fav-select" title="Selects a saved favorite patch from hub/patches/"><option value="">No saved favorites</option></select>
+        <button id="btn-fav-load" title="Loads the selected favorite patch, sets it active, and sends its MIDI CCs to FM-1">Load Favorite</button>
+        <button id="btn-fav-delete" class="danger" title="Permanently deletes the selected favorite patch file from hub/patches/">Delete</button>
+      </div>
+      <div id="ops-grid" class="ops-grid"></div>
+      <div style="margin-top: 14px;">
+        <div class="row" style="justify-content: space-between; margin-bottom: 6px;">
+          <h2 style="margin: 0;">Momentary Snap FX (Left-Hold: Snap Back · Right-Click: Set FM-1 Default)</h2>
+          <span id="fx-active-badge" class="badge">Snap FX: Off</span>
+        </div>
+        <div id="fx-grid" class="fx-grid"></div>
+      </div>
+      <div id="action-log" class="log">Ready.</div>
+    </section>
+
+    <section id="sec-logs" class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <h2 style="margin: 0;">5. Live Debugging Console</h2>
+        <div class="row">
+          <label style="font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+            <input id="chk-autoscroll" type="checkbox" checked /> Auto-scroll
+          </label>
+          <button id="btn-clear-logs" style="padding: 5px 10px; font-size: 12px;">Clear</button>
+        </div>
+      </div>
+      <div id="debug-console" class="console-box"></div>
+    </section>
+  </div>
+
+  <script>
+    const byId = (id) => document.getElementById(id);
+    const setLog = (msg) => { byId('action-log').textContent = msg; };
+
+    const api = async (path, options = {}) => {
+      const res = await fetch(path, options);
+      return res.json();
+    };
+
+    const renderSlots = (slots) => {
+      const container = byId('slots-grid');
+      container.innerHTML = slots.map((s) => {
+        const dotClass = s.ready ? 'on' : (s.warming ? 'warn' : (s.lastError ? 'err' : ''));
+        const label = s.ready ? 'READY (0ms)' : (s.warming ? 'WARMING...' : (s.lastError ? 'ERROR' : 'EMPTY'));
+        return `
+          <div class="slot" title="Pre-warmed ${escHtml(s.role)} cache slot (${label}) — refills automatically in the background after triggering">
+            <div class="slot-head">
+              <span class="slot-role">Slot ${s.id}: ${s.role}</span>
+              <span class="badge"><span class="dot ${dotClass}"></span>${label}</span>
+            </div>
+            <div class="slot-err">${s.lastError || ''}</div>
+            <button onclick="triggerSlot(${s.id})" ${s.ready ? '' : 'disabled'} title="Activates pre-warmed Slot ${s.id} (${escHtml(s.role)}) with 0 ms latency, pushes MIDI CCs (Alg/FB/Op1-4), and starts background refill">Trigger Slot ${s.id}</button>
+          </div>
+        `;
+      }).join('');
+    };
+
+    const OP_TOOLTIPS = {
+      1: 'Op 1 (Carrier): Controls audible output volume (CC 7 / MASTER) and main Attack (CC 73 / KNOB4) &amp; Decay (CC 72 / KNOB3). Pitch ratio stays locked during Harmonic Drift.',
+      2: 'Op 2 (Modulator): Shapes core harmonic timbre &amp; brightness via Level (CC 74 / KNOB1), Ratio (CC 77), and ADSR envelope.',
+      3: 'Op 3 (Modulator): Adds upper harmonic bite &amp; detune via Level (CC 75), Ratio (CC 78), and ADSR envelope.',
+      4: 'Op 4 (Modulator): Adds edge, metallic partials, and Feedback grit via Level (CC 76) and ADSR envelope.',
+    };
+
+    const renderPatch = (patch) => {
+      byId('patch-name').textContent = patch.patchName;
+      byId('patch-algo').textContent = patch.algorithm;
+      byId('patch-fb').textContent = Number(patch.feedback).toFixed(2);
+      byId('ops-grid').innerHTML = patch.operators.map((op) => `
+        <div class="op" title="${OP_TOOLTIPS[op.id] || ''}">
+          <div class="op-title">
+            <span>Op ${op.id} ${op.id === 1 ? '(Carrier)' : '(Mod)'}</span>
+            <span title="Frequency multiplier relative to played note (0.5x–16.0x)">Ratio ${Number(op.ratio).toFixed(2)}x</span>
+          </div>
+          <div class="bar-bg" title="Operator output/modulation level (${Math.round(op.level * 100)}%)"><div class="bar-fill" style="width:${Math.round(op.level * 100)}%"></div></div>
+          <div class="kv">
+            <span title="Operator amplitude / modulation depth (0.00–1.00)">Level: <b>${Number(op.level).toFixed(2)}</b></span>
+            <span title="Envelope sustain level while key is held (0.00–1.00)">Sustain: <b>${Number(op.sustain).toFixed(2)}</b></span>
+            <span title="Envelope fade-in time (0.001–10.0s)">Attack: <b>${Number(op.attack).toFixed(3)}s</b></span>
+            <span title="Time from peak down to sustain level (0.001–10.0s)">Decay: <b>${Number(op.decay).toFixed(3)}s</b></span>
+            <span title="Fade-out time after note release (0.001–10.0s)">Release: <b>${Number(op.release).toFixed(3)}s</b></span>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    const escHtml = (str) => String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const renderLogs = (logs) => {
+      const box = byId('debug-console');
+      if (!logs.length) {
+        box.innerHTML = '<div class="log-line log-ts">No debug events yet.</div>';
+        return;
+      }
+      box.innerHTML = logs.map((entry) => {
+        const time = entry.ts.slice(11, 23);
+        const detail = entry.detail
+          ? ` | ${typeof entry.detail === 'string' ? entry.detail : JSON.stringify(entry.detail)}`
+          : '';
+        const lvlClass = entry.level === 'error' ? 'log-error' : (entry.level === 'warn' ? 'log-warn' : 'log-info');
+        return `<div class="log-line ${lvlClass}"><span class="log-ts">${time}</span> <span class="log-src">[${escHtml(entry.source)}]</span> ${escHtml(entry.message)}${escHtml(detail)}</div>`;
+      }).join('');
+      if (byId('chk-autoscroll').checked) {
+        box.scrollTop = box.scrollHeight;
+      }
+    };
+
+    const midiState = {
+      access: null,
+      selectedInId: '',
+      selectedOutId: '',
+      presets: null,
+      lastPatchHash: '',
+      latestPatch: null,
+      audioCtx: null,
+    };
+
+    const clientLog = (level, source, message, detail = null) => {
+      fetch('/logs/client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level, source, message, detail }),
+      }).catch(() => {});
+    };
+
+    const midiToHz = (note) => 440 * Math.pow(2, (note - 69) / 12);
+
+    const playWebAudioFmNote = (note, velocity = 100, durationSec = 0.24) => {
+      if (!byId('chk-webaudio').checked || !midiState.latestPatch) return;
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return;
+      if (!midiState.audioCtx) midiState.audioCtx = new AudioCtor();
+      const ctx = midiState.audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const patch = midiState.latestPatch;
+      const ops = patch.operators || [];
+      const baseHz = midiToHz(note);
+      const now = ctx.currentTime;
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime((velocity / 127) * 0.28, now);
+      masterGain.connect(ctx.destination);
+
+      const op1 = ops[0] || { ratio: 1, level: 0.9, attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.08 };
+      const carrier = ctx.createOscillator();
+      carrier.type = 'sine';
+      carrier.frequency.setValueAtTime(baseHz * op1.ratio, now);
+
+      const cEnv = ctx.createGain();
+      const cPeak = Math.max(0.05, op1.level);
+      const cAtk = Math.min(0.4, op1.attack);
+      const cDec = Math.min(0.6, op1.decay);
+      const cRel = Math.min(0.5, op1.release);
+      cEnv.gain.setValueAtTime(0.0001, now);
+      cEnv.gain.linearRampToValueAtTime(cPeak, now + cAtk);
+      cEnv.gain.exponentialRampToValueAtTime(Math.max(0.001, cPeak * Math.max(0.05, op1.sustain)), now + cAtk + cDec);
+      cEnv.gain.exponentialRampToValueAtTime(0.0001, now + durationSec + cRel);
+      carrier.connect(cEnv);
+      cEnv.connect(masterGain);
+
+      const modNodes = ops.slice(1).map((mod) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseHz * mod.ratio, now);
+        const modGain = ctx.createGain();
+        const modIndex = baseHz * mod.level * (1.2 + (patch.feedback || 0) * 2.5);
+        const mAtk = Math.min(0.3, mod.attack);
+        const mDec = Math.min(0.5, mod.decay);
+        modGain.gain.setValueAtTime(0.001, now);
+        modGain.gain.linearRampToValueAtTime(modIndex, now + mAtk);
+        modGain.gain.exponentialRampToValueAtTime(Math.max(1, modIndex * Math.max(0.05, mod.sustain)), now + mAtk + mDec);
+        osc.connect(modGain);
+        modGain.connect(carrier.frequency);
+        osc.start(now);
+        osc.stop(now + durationSec + cRel + 0.05);
+        return osc;
+      });
+
+      carrier.start(now);
+      carrier.stop(now + durationSec + cRel + 0.05);
+      return modNodes;
+    };
+
+    const getSelectedMidiOut = () => {
+      if (!midiState.access || !midiState.selectedOutId) return null;
+      return midiState.access.outputs.get(midiState.selectedOutId) || null;
+    };
+
+    const ensureMidiOutOpen = async (out) => {
+      if (!out) return null;
+      if (out.connection !== 'open') {
+        await out.open();
+      }
+      return out;
+    };
+
+    const sendMidiPacket = async (out, bytes) => {
+      await ensureMidiOutOpen(out);
+      out.send(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+    };
+
+    const sendActivePatchCcs = async (reason = 'manual') => {
+      const out = getSelectedMidiOut();
+      const ch = Number(byId('midi-ch-select').value || 1);
+      const mode = byId('midi-profile-select')?.value || 'atek303';
+      const waveVal = byId('atek-wave-select')?.value ?? '';
+      const waveQuery = waveVal !== '' ? `&wave=${encodeURIComponent(waveVal)}` : '';
+      const data = await api(`/midi-cc?ch=${ch}&mode=${encodeURIComponent(mode)}${waveQuery}`);
+      if (!out) {
+        if (reason === 'manual') {
+          setLog('No MIDI Output selected (pick loopMIDI or hardware synth).');
+          clientLog('warn', 'midi', 'Skipped CC send: no MIDI Output port selected');
+        }
+        return;
+      }
+      try {
+        await ensureMidiOutOpen(out);
+        for (const msg of data.messages) {
+          out.send(new Uint8Array(msg));
+        }
+        setLog(`Sent ${data.messages.length} MIDI CCs (${mode}) for "${data.patchName}" -> ${out.name} (ch ${ch})`);
+        clientLog('info', 'midi-tx', `Sent ${data.messages.length} CCs [${mode}] for "${data.patchName}" (${reason})`, {
+          port: out.name,
+          channel: ch,
+          state: out.state,
+          connection: out.connection,
+          sample: data.messages[0],
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setLog(`MIDI TX failed: ${msg}`);
+        clientLog('error', 'midi-tx', `MIDI TX failed on "${out.name}": ${msg}`, {
+          state: out.state,
+          connection: out.connection,
+        });
+      }
+    };
+
+    const handleIncomingMidi = async (event) => {
+      const bytes = event.data;
+      if (!bytes || bytes.length < 2) return;
+      const status = bytes[0];
+      const cmd = status & 0xf0;
+      const ch = (status & 0x0f) + 1;
+      const d1 = bytes[1] & 0x7f;
+      const d2 = bytes.length > 2 ? bytes[2] & 0x7f : 0;
+
+      const evType = cmd === 0x90 && d2 > 0 ? 'note_on' : (cmd === 0x80 || cmd === 0x90 ? 'note_off' : (cmd === 0xb0 ? 'cc' : 'other'));
+      const presets = midiState.presets?.presets || [];
+      const matched = presets.find((p) => {
+        const t = p.midiTrigger;
+        if (!t || t.type !== evType) return false;
+        if (t.channel !== undefined && t.channel !== ch) return false;
+        return t.type === 'note_on' ? t.note === d1 : t.number === d1;
+      });
+
+      if (matched) {
+        clientLog('info', 'midi-rx', `Matched preset "${matched.id}"`, { ch, d1, d2 });
+        if (matched.mode === 'nudge_modulators') {
+          await api('/drift', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deltaRatio: 0.15 }) });
+        } else if (matched.mode === 'crossfade_cached_slots') {
+          const slotId = Number(byId('morph-slot').value);
+          await api('/morph', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slotId, amount: d2 / 127 }) });
+        }
+        refresh();
+        return;
+      }
+
+      const out = getSelectedMidiOut();
+      if (out && (evType === 'note_on' || evType === 'note_off' || evType === 'cc')) {
+        sendMidiPacket(out, bytes).catch((err) => {
+          clientLog('error', 'midi-tx', `Forward failed: ${err.message}`);
+        });
+      }
+      if (evType === 'note_on') {
+        playWebAudioFmNote(d1, d2, 0.25);
+        if (seqState.recording) {
+          recordStepNote(d1, d2);
+        }
+      }
+    };
+
+    const bindMidiPorts = () => {
+      if (!midiState.access) return;
+      const inSel = byId('midi-in-select');
+      const outSel = byId('midi-out-select');
+      const prevIn = midiState.selectedInId || inSel.value;
+      const prevOut = midiState.selectedOutId || outSel.value;
+
+      const inputs = [...midiState.access.inputs.values()];
+      const outputs = [...midiState.access.outputs.values()];
+
+      inSel.innerHTML = '<option value="">None</option>' + inputs.map((p) => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
+      outSel.innerHTML = '<option value="">None</option>' + outputs.map((p) => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
+
+      if (inputs.some((p) => p.id === prevIn)) inSel.value = prevIn;
+      if (outputs.some((p) => p.id === prevOut)) {
+        outSel.value = prevOut;
+      } else {
+        const autoOut = outputs.find((p) => /fm-1|loopmidi/i.test(p.name));
+        if (autoOut) outSel.value = autoOut.id;
+      }
+
+      midiState.selectedInId = inSel.value;
+      midiState.selectedOutId = outSel.value;
+
+      for (const inp of inputs) {
+        inp.onmidimessage = inp.id === midiState.selectedInId ? handleIncomingMidi : null;
+      }
+
+      const selectedOut = getSelectedMidiOut();
+      if (selectedOut) {
+        ensureMidiOutOpen(selectedOut)
+          .then((port) => {
+            clientLog('info', 'midi', `Opened MIDI Out "${port.name}"`, {
+              state: port.state,
+              connection: port.connection,
+            });
+          })
+          .catch((err) => {
+            clientLog('error', 'midi', `Failed to open MIDI Out "${selectedOut.name}": ${err.message}`);
+          });
+      }
+    };
+
+    const initMidi = async () => {
+      try {
+        midiState.presets = await api('/presets');
+      } catch {}
+      if (!navigator.requestMIDIAccess) {
+        clientLog('warn', 'midi', 'Web MIDI API unavailable in this environment');
+        return;
+      }
+      let sysexEnabled = false;
+      try {
+        try {
+          midiState.access = await navigator.requestMIDIAccess({ sysex: true });
+          sysexEnabled = true;
+        } catch {
+          midiState.access = await navigator.requestMIDIAccess({ sysex: false });
+        }
+        midiState.access.onstatechange = () => bindMidiPorts();
+        bindMidiPorts();
+        const outCount = midiState.access.outputs.size;
+        const inCount = midiState.access.inputs.size;
+        clientLog('info', 'midi', `Web MIDI ready (${inCount} in, ${outCount} out ports, SysEx ${sysexEnabled ? 'ON' : 'OFF'})`);
+      } catch (err) {
+        clientLog('error', 'midi', `Web MIDI denied/failed: ${err.message}`);
+      }
+    };
+
+    const renderMacroState = (macroState) => {
+      const activeId = macroState.activeSnapFxId || null;
+      const defaultId = macroState.defaultSnapFxId || null;
+      const fxBadge = byId('fx-active-badge');
+      if (activeId) {
+        fxBadge.textContent = `Snap FX: ${activeId}`;
+      } else if (defaultId) {
+        fxBadge.textContent = `Default: ${defaultId}`;
+      } else {
+        fxBadge.textContent = 'Default: Original';
+      }
+      document.querySelectorAll('.fx-pad').forEach((pad) => {
+        pad.classList.toggle('active', Boolean(activeId) && pad.dataset.fxId === activeId);
+        const isDef = pad.dataset.fxReset === 'true' ? !defaultId : pad.dataset.fxId === defaultId;
+        pad.classList.toggle('is-default', isDef);
+      });
+
+      const depth = macroState.rouletteHistoryDepth || 0;
+      const btnRouletteBack = byId('btn-roulette-back');
+      if (btnRouletteBack) {
+        btnRouletteBack.disabled = depth === 0;
+        btnRouletteBack.textContent = depth > 0 ? `← Roulette Back (${depth})` : '← Roulette Back';
+      }
+
+      const rMax = macroState.rouletteSlideMax || 0;
+      const rPos = macroState.rouletteSlidePos || 0;
+      const rSlider = byId('roulette-slider');
+      const rPosEl = byId('roulette-pos');
+      if (rSlider && rPosEl) {
+        if (rMax === 0) {
+          rSlider.disabled = true;
+          rPosEl.textContent = '—';
+        } else {
+          rSlider.disabled = false;
+          rSlider.max = String(rMax * 100);
+          if (document.activeElement !== rSlider) {
+            rSlider.value = String(Math.round(rPos * 100));
+            rPosEl.textContent = rMax === 1 ? `${Math.round(rPos * 100)}%` : `${rPos.toFixed(2)}/${rMax}`;
+          }
+        }
+      }
+
+      const slider = byId('smart-slider');
+      const info = byId('smart-info');
+      if (macroState.macro) {
+        slider.disabled = false;
+        const pct = Math.round((macroState.amount || 0) * 100);
+        if (document.activeElement !== slider) {
+          slider.value = String(pct);
+          byId('smart-pct').textContent = `${pct}%`;
+        }
+        const targets = macroState.macro.bindings.map((b) => `${b.target} (${b.min}→${b.max})`).join(', ');
+        info.textContent = `${macroState.macro.macroName}: ${targets}`;
+      } else {
+        slider.disabled = true;
+        info.textContent = 'No Smart Macro assigned yet.';
+      }
+    };
+
+    const refresh = async () => {
+      try {
+        const [status, patch, fm1, logsData, macroState] = await Promise.all([
+          api('/status'),
+          api('/patch'),
+          api('/fm1/status'),
+          api('/logs'),
+          api('/macro'),
+        ]);
+        byId('hub-badge').textContent = `Style: ${status.style || 'None'} (Epoch ${status.epoch})`;
+        renderSlots(status.slots);
+        renderPatch(patch);
+        renderLogs(logsData.logs || []);
+        renderMacroState(macroState);
+
+        midiState.latestPatch = patch;
+        const patchHash = JSON.stringify(patch);
+        if (midiState.lastPatchHash && midiState.lastPatchHash !== patchHash) {
+          sendActivePatchCcs('auto-sync');
+        }
+        midiState.lastPatchHash = patchHash;
+
+        const dot = byId('fm1-dot');
+        if (fm1.running) {
+          dot.className = 'dot on';
+          byId('fm1-badge').textContent = `FM-1: ${fm1.firmware} (PID ${fm1.pid})`;
+        } else {
+          dot.className = 'dot';
+          byId('fm1-badge').textContent = 'FM-1: Stopped';
+        }
+      } catch (err) {
+        setLog(`Refresh error: ${err.message}`);
+      }
+    };
+
+    const fxHoldState = { activeId: null };
+
+    const engageSnapPad = async (fxId, fxName) => {
+      if (fxHoldState.activeId === fxId) return;
+      fxHoldState.activeId = fxId;
+      await api('/snap-fx/engage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: fxId, intensity: 1.0 }),
+      });
+      setLog(`Snap FX engaged: ${fxName} (release to snap back)`);
+      refresh();
+    };
+
+    const releaseSnapPad = async () => {
+      if (!fxHoldState.activeId) return;
+      const prev = fxHoldState.activeId;
+      fxHoldState.activeId = null;
+      await api('/snap-fx/release', { method: 'POST' });
+      setLog(`Snap FX released (${prev} -> snapped back)`);
+      refresh();
+    };
+
+    const setSnapPadAsDefault = async (fxId, fxName) => {
+      fxHoldState.activeId = null;
+      const res = await api('/snap-fx/set-default', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: fxId, intensity: 1.0 }),
+      });
+      if (res.success) {
+        setLog(`Set FM-1 default -> ${fxName}`);
+        clientLog('info', 'snap-fx', `Set FM-1 default patch from "${fxId}"`);
+        sendActivePatchCcs('snap-default');
+        refresh();
+      } else {
+        setLog(`Set default failed: ${res.error}`);
+      }
+    };
+
+    const resetToOriginalDefault = async () => {
+      fxHoldState.activeId = null;
+      const res = await api('/snap-fx/reset-default', { method: 'POST' });
+      if (res.success) {
+        setLog(`Restored Original Default patch on FM-1 (${res.value.patchName})`);
+        clientLog('info', 'snap-fx', `Restored Original Default patch "${res.value.patchName}"`);
+        sendActivePatchCcs('snap-default-reset');
+        refresh();
+      }
+    };
+
+    const renderSnapFxGrid = (effects) => {
+      const grid = byId('fx-grid');
+      const originalBtnHtml = `
+        <button type="button" class="fx-pad is-default" data-fx-reset="true" style="--fx-accent:#38bdf8" title="Restore FM-1 to Original Default patch">
+          <span class="fx-pad-name">Original Default</span>
+          <span class="fx-pad-style">Reset FM-1</span>
+        </button>
+      `;
+      grid.innerHTML = originalBtnHtml + effects.map((fx) => `
+        <button type="button" class="fx-pad" data-fx-id="${escHtml(fx.id)}" style="--fx-accent:${fx.accent}" title="Left-Hold: Momentary Snap FX · Right-Click: Set as FM-1 Default">
+          <span class="fx-pad-name">${escHtml(fx.name)}</span>
+          <span class="fx-pad-style">${escHtml(fx.style)}</span>
+        </button>
+      `).join('');
+
+      grid.querySelectorAll('.fx-pad').forEach((pad) => {
+        if (pad.dataset.fxReset === 'true') {
+          pad.addEventListener('click', resetToOriginalDefault);
+          pad.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            resetToOriginalDefault();
+          });
+          return;
+        }
+        const fxId = pad.dataset.fxId;
+        const fxName = pad.querySelector('.fx-pad-name').textContent;
+        pad.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          engageSnapPad(fxId, fxName);
+        });
+        pad.addEventListener('pointerup', releaseSnapPad);
+        pad.addEventListener('pointercancel', releaseSnapPad);
+        pad.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          setSnapPadAsDefault(fxId, fxName);
+        });
+      });
+    };
+
+    window.addEventListener('pointerup', releaseSnapPad);
+    window.addEventListener('blur', releaseSnapPad);
+
+    const refreshFavorites = async (selectId = null) => {
+      try {
+        const data = await api('/favorites');
+        const sel = byId('fav-select');
+        const prev = selectId || sel.value;
+        const list = data.favorites || [];
+        if (!list.length) {
+          sel.innerHTML = '<option value="">No saved favorites</option>';
+          return;
+        }
+        sel.innerHTML = list
+          .map((f) => `<option value="${escHtml(f.id)}">${escHtml(f.patchName)}${f.style ? ` (${escHtml(f.style)})` : ''}</option>`)
+          .join('');
+        if (list.some((f) => f.id === prev)) {
+          sel.value = prev;
+        }
+      } catch {}
+    };
+
+    const seqState = {
+      playing: false,
+      recording: false,
+      cursorStep: 0,
+      currentStep: 0,
+      stepStartTime: 0,
+      stepMs: 120.9677,
+      nextTickTime: 0,
+      justRecordedStep: null,
+      saveTimerId: null,
+      saveSeq: 0,
+      clockTimers: [],
+      bpm: 124,
+      step: 0,
+      patterns: [],
+      activeId: null,
+      queuedId: null,
+      timerId: null,
+      lastNote: null,
+    };
+
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const fmtMidiNote = (n) => (n === null || n === undefined ? '·' : `${NOTE_NAMES[n % 12]}${Math.floor(n / 12) - 1}`);
+
+    const getActivePatternEntry = () =>
+      seqState.patterns.find((p) => p.id === seqState.activeId) || seqState.patterns[0] || null;
+
+    const playMetronomeClick = (isDownbeat) => {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return;
+      if (!midiState.audioCtx) midiState.audioCtx = new AudioCtor();
+      const ctx = midiState.audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(isDownbeat ? 1100 : 780, now);
+      gain.gain.setValueAtTime(isDownbeat ? 0.12 : 0.07, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    };
+
+    const schedulePatternSave = (entry, nextPattern) => {
+      const slug = nextPattern.patternName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_|_$/g, '') || 'custom_pattern';
+      const localId = !entry || entry.builtin ? slug : entry.id;
+      const optimisticEntry = {
+        id: localId,
+        builtin: false,
+        style: entry?.style || null,
+        pattern: nextPattern,
+      };
+      seqState.patterns = seqState.patterns.some((p) => p.id === localId)
+        ? seqState.patterns.map((p) => (p.id === localId ? optimisticEntry : p))
+        : [...seqState.patterns, optimisticEntry];
+      seqState.activeId = localId;
+
+      seqState.saveSeq += 1;
+      const captureSeq = seqState.saveSeq;
+      if (seqState.saveTimerId) clearTimeout(seqState.saveTimerId);
+      seqState.saveTimerId = setTimeout(async () => {
+        const res = await api('/patterns/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pattern: nextPattern }),
+        });
+        if (!res.success) {
+          setLog(`Pattern save failed: ${res.error}`);
+          return;
+        }
+        const savedEntry = res.value;
+        if (seqState.saveSeq !== captureSeq) {
+          return;
+        }
+        seqState.patterns = seqState.patterns.some((p) => p.id === savedEntry.id)
+          ? seqState.patterns.map((p) => (p.id === savedEntry.id ? savedEntry : p))
+          : [...seqState.patterns, savedEntry];
+        seqState.activeId = savedEntry.id;
+        renderSequencer();
+      }, 120);
+      return optimisticEntry;
+    };
+
+    const foldMidiToStepNote = (note) => {
+      if (note === null || note === undefined) return null;
+      let n = Math.round(Number(note));
+      while (n < 24) n += 12;
+      while (n > 84) n -= 12;
+      return n;
+    };
+
+    const quantizeCurrentStep = () => {
+      const baseStep = ((seqState.currentStep % 16) + 16) % 16;
+      const safeStepMs = Math.max(1, seqState.stepMs || 125);
+      const elapsed = Math.max(0, performance.now() - seqState.stepStartTime);
+      const snappedToNext = elapsed >= safeStepMs * 0.5;
+      const stepIndex = snappedToNext ? (baseStep + 1) % 16 : baseStep;
+      return { stepIndex, snappedToNext };
+    };
+
+    const recordStepNote = (note, velocity = 100, stepOverride = null) => {
+      const entry = getActivePatternEntry();
+      if (!entry) return;
+      let targetStep = seqState.cursorStep;
+      let snapped = false;
+      if (stepOverride !== null) {
+        targetStep = stepOverride;
+      } else if (seqState.playing) {
+        const q = quantizeCurrentStep();
+        targetStep = q.stepIndex;
+        snapped = q.snappedToNext;
+        if (snapped && note !== null) {
+          seqState.justRecordedStep = targetStep;
+        }
+      } else {
+        seqState.cursorStep = (targetStep + 1) % 16;
+      }
+      const foldedNote = foldMidiToStepNote(note);
+      const clampedVel = Math.max(1, Math.min(127, Math.round(Number(velocity) || 100)));
+      const nextPatternName = entry.builtin
+        ? `${entry.pattern.patternName} Edit`
+        : entry.pattern.patternName;
+      const nextSteps = entry.pattern.steps.map((s, idx) =>
+        idx === targetStep
+          ? { note: foldedNote, velocity: clampedVel, accent: clampedVel >= 115, slide: false }
+          : s
+      );
+      const nextPattern = {
+        ...entry.pattern,
+        patternName: nextPatternName,
+        steps: nextSteps,
+      };
+      const saved = schedulePatternSave(entry, nextPattern);
+      setLog(`Recorded ${fmtMidiNote(foldedNote)} at Step ${targetStep + 1}/16${snapped ? ' (quantized)' : ''} -> "${saved.pattern.patternName}"`);
+      clientLog('info', 'seq-rec', `Step ${targetStep + 1}: ${fmtMidiNote(foldedNote)} (vel ${clampedVel}) -> "${saved.id}"`);
+      renderSequencer();
+    };
+
+    const FM1_PANEL_NOTES = {
+      PLAY: 60,
+      REC: 61,
+      SEQ: 62,
+      ARP: 63,
+      SAVE: 64,
+      HOME: 65,
+      EDIT: 66,
+      GLO: 67,
+      ENV: 68,
+      LFO: 69,
+      FX: 70,
+    };
+
+    const sendFm1PanelButton = async (buttonName) => {
+      const out = getSelectedMidiOut();
+      const note = FM1_PANEL_NOTES[buttonName];
+      if (!out || note === undefined) {
+        setLog(`FM-1 ${buttonName} skipped: select a MIDI Out port mapped via hub/config/fm1-hub-map.json`);
+        return false;
+      }
+      await sendMidiPacket(out, [0x9f, note, 127]);
+      setTimeout(() => {
+        sendMidiPacket(out, [0x8f, note, 0]).catch(() => {});
+      }, 90);
+      clientLog('info', 'fm1-panel', `Tapped FM-1 ${buttonName} (Ch 16 Note ${note})`);
+      return true;
+    };
+
+    const preloadPatternToFm1 = async () => {
+      const entry = getActivePatternEntry();
+      const out = getSelectedMidiOut();
+      if (!entry) return;
+      if (!out) {
+        setLog('Preload aborted: choose your FM-1 MIDI Out port first.');
+        return;
+      }
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      setLog(`Preloading "${entry.pattern.patternName}" into ATEK303 Step Editor (EDIT -> 16 keys -> HOME)...`);
+      await sendFm1PanelButton('EDIT');
+      await sleep(160);
+      for (let i = 0; i < 16; i += 1) {
+        const s = entry.pattern.steps[i];
+        const keyNote = s.note !== null ? Math.max(53, Math.min(76, 53 + (s.note % 24))) : 53 + i;
+        if (s.note !== null) {
+          await sendMidiPacket(out, [0x9e, keyNote, s.velocity]);
+          await sleep(75);
+          await sendMidiPacket(out, [0x8e, keyNote, 0]);
+        }
+        await sleep(45);
+      }
+      await sendFm1PanelButton('HOME');
+      setLog(`Preloaded "${entry.pattern.patternName}" steps into Step Editor (Ch 16 EDIT/HOME + Ch 15 keys)`);
+      clientLog('info', 'fm1-panel', `Completed 16-step preload -> EDIT for "${entry.pattern.patternName}"`);
+    };
+
+    const renderSequencer = () => {
+      const entry = getActivePatternEntry();
+      const stepsEl = byId('seq-steps');
+      const bankEl = byId('seq-bank');
+      const badgeEl = byId('seq-badge');
+      const playBtn = byId('btn-seq-play');
+      const recBtn = byId('btn-seq-rec');
+
+      playBtn.textContent = seqState.playing ? 'Stop Sequence' : 'Play Sequence';
+      playBtn.className = seqState.playing ? 'danger' : 'primary';
+
+      if (recBtn) {
+        recBtn.textContent = seqState.recording ? '● Recording (Click to Stop)' : '● Rec to Pattern';
+        recBtn.className = seqState.recording ? 'recording' : '';
+      }
+
+      const selectedEntry =
+        (seqState.queuedId && seqState.patterns.find((p) => p.id === seqState.queuedId)) || entry;
+      const delBtn = byId('btn-seq-del');
+      if (delBtn) {
+        delBtn.disabled = !selectedEntry || Boolean(selectedEntry.builtin);
+      }
+
+      if (seqState.queuedId) {
+        badgeEl.textContent = `Step ${seqState.currentStep + 1}/16 · Queued -> ${seqState.queuedId}`;
+      } else if (seqState.recording && !seqState.playing) {
+        badgeEl.textContent = `REC Cursor Step ${seqState.cursorStep + 1}/16 (${entry ? entry.pattern.patternName : 'None'})`;
+      } else if (seqState.playing) {
+        badgeEl.textContent = `${seqState.recording ? 'REC + ' : ''}Playing Step ${seqState.currentStep + 1}/16 (${seqState.bpm} BPM)`;
+      } else {
+        badgeEl.textContent = `Stopped (${entry ? entry.pattern.patternName : 'None'})`;
+      }
+
+      if (entry) {
+        stepsEl.innerHTML = entry.pattern.steps.map((s, idx) => {
+          const classes = [
+            'seq-step',
+            s.note !== null ? 'has-note' : '',
+            s.accent ? 'accent' : '',
+            s.slide ? 'slide' : '',
+            seqState.recording && !seqState.playing && idx === seqState.cursorStep ? 'rec-cursor' : '',
+            seqState.playing && idx === seqState.currentStep ? 'playhead' : '',
+          ].filter(Boolean).join(' ');
+          return `<div class="${classes}" data-step-idx="${idx}" title="Step ${idx + 1}: Left-click sets record cursor · Right-click clears to rest">${fmtMidiNote(s.note)}</div>`;
+        }).join('');
+        stepsEl.querySelectorAll('.seq-step').forEach((cell) => {
+          const idx = Number(cell.dataset.stepIdx);
+          cell.addEventListener('click', () => {
+            seqState.cursorStep = idx;
+            renderSequencer();
+          });
+          cell.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            recordStepNote(null, 96, idx);
+          });
+        });
+      }
+
+      bankEl.innerHTML = seqState.patterns.map((item, idx) => {
+        const isAct = item.id === seqState.activeId;
+        const isQue = item.id === seqState.queuedId;
+        const cls = `pat-btn ${isAct ? 'active' : ''} ${isQue ? 'queued' : ''}`;
+        const tag = isQue ? ' [QUEUED]' : (isAct ? ' [ACTIVE]' : '');
+        return `<button type="button" class="${cls}" data-pat-id="${escHtml(item.id)}">#${idx + 1} ${escHtml(item.pattern.patternName)} (${item.pattern.bpm})${tag}</button>`;
+      }).join('');
+
+      bankEl.querySelectorAll('.pat-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.patId;
+          if (!seqState.playing) {
+            const target = seqState.patterns.find((p) => p.id === id);
+            seqState.activeId = id;
+            seqState.queuedId = null;
+            if (target) {
+              seqState.bpm = target.pattern.bpm;
+              byId('seq-bpm').value = String(target.pattern.bpm);
+            }
+            const idx = seqState.patterns.findIndex((p) => p.id === id);
+            if (byId('chk-seq-pc').checked && idx >= 0) {
+              const out = getSelectedMidiOut();
+              const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+              if (out) sendMidiPacket(out, [0xc0 | ch, idx & 0x7f]).catch(() => {});
+            }
+            setLog(`Selected pattern: ${target ? target.pattern.patternName : id}`);
+          } else if (id === seqState.activeId) {
+            seqState.queuedId = null;
+            setLog('Cancelled queued pattern switch');
+          } else {
+            seqState.queuedId = id;
+            setLog(`Queued "${id}" — will switch at Step 1 (end of sequence)`);
+            clientLog('info', 'seq', `Queued pattern switch -> "${id}" (waits for Step 16 -> 1)`);
+          }
+          renderSequencer();
+        });
+      });
+    };
+
+    const clearClockTimers = () => {
+      while (seqState.clockTimers.length) {
+        clearTimeout(seqState.clockTimers.pop());
+      }
+    };
+
+    const scheduleStepClockTicks = (out, stepMs) => {
+      clearClockTimers();
+      if (!out || !byId('chk-seq-clock')?.checked) return;
+      const tickInterval = stepMs / 6;
+      sendMidiPacket(out, [0xf8]).catch(() => {});
+      for (let k = 1; k < 6; k += 1) {
+        const id = setTimeout(() => {
+          if (seqState.playing && byId('chk-seq-clock')?.checked) {
+            sendMidiPacket(out, [0xf8]).catch(() => {});
+          }
+        }, k * tickInterval);
+        seqState.clockTimers.push(id);
+      }
+    };
+
+    const tickSequencerStep = () => {
+      if (!seqState.playing) return;
+      const now = performance.now();
+      const stepIdx = seqState.step;
+      seqState.currentStep = stepIdx;
+      seqState.stepStartTime = now;
+      const stepMs = (60000 / Math.max(60, Math.min(180, seqState.bpm))) / 4;
+      seqState.stepMs = stepMs;
+
+      const wrappedToZero = stepIdx === 0;
+      if (wrappedToZero && seqState.queuedId) {
+        const nextId = seqState.queuedId;
+        const nextIdx = seqState.patterns.findIndex((p) => p.id === nextId);
+        const nextEntry = seqState.patterns[nextIdx];
+        seqState.activeId = nextId;
+        seqState.queuedId = null;
+        if (nextEntry) {
+          seqState.bpm = nextEntry.pattern.bpm;
+          byId('seq-bpm').value = String(nextEntry.pattern.bpm);
+        }
+        if (byId('chk-seq-pc').checked && nextIdx >= 0) {
+          const out = getSelectedMidiOut();
+          const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+          if (out) {
+            sendMidiPacket(out, [0xc0 | ch, nextIdx & 0x7f]).catch(() => {});
+          }
+        }
+        if (byId('chk-seq-fm1btn').checked) {
+          sendFm1PanelButton('SEQ').catch(() => {});
+        }
+        clientLog('info', 'seq', `End-of-sequence switch -> "${nextEntry ? nextEntry.pattern.patternName : nextId}" (Program #${nextIdx + 1})`);
+        setLog(`Switched pattern at bar start -> ${nextEntry ? nextEntry.pattern.patternName : nextId}`);
+      }
+
+      const out = getSelectedMidiOut();
+      const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+      scheduleStepClockTicks(out, stepMs);
+
+      if (byId('chk-seq-metro')?.checked && stepIdx % 4 === 0) {
+        playMetronomeClick(stepIdx === 0);
+      }
+
+      const skipRecordedDoubleTrigger = seqState.justRecordedStep === stepIdx;
+      if (skipRecordedDoubleTrigger) {
+        seqState.justRecordedStep = null;
+      }
+
+      const entry = getActivePatternEntry();
+      const stepObj = entry?.pattern.steps[stepIdx];
+      const sendSeqNotes = byId('chk-seq-notes')?.checked ?? true;
+
+      if (!skipRecordedDoubleTrigger && stepObj && stepObj.note !== null) {
+        const note = stepObj.note;
+        const vel = stepObj.accent ? Math.min(127, Math.round(stepObj.velocity * 1.15)) : stepObj.velocity;
+        const gateMs = stepObj.slide ? stepMs * 1.15 : stepMs * 0.68;
+        if (out && sendSeqNotes) {
+          sendMidiPacket(out, [0x90 | ch, note, vel]).catch(() => {});
+          setTimeout(() => {
+            sendMidiPacket(out, [0x80 | ch, note, 0]).catch(() => {});
+          }, gateMs);
+        }
+        playWebAudioFmNote(note, vel, gateMs / 1000);
+      }
+
+      renderSequencer();
+      seqState.step = (stepIdx + 1) % 16;
+      seqState.nextTickTime = (now - seqState.nextTickTime > stepMs * 2)
+        ? now + stepMs
+        : seqState.nextTickTime + stepMs;
+      const delay = Math.max(4, seqState.nextTickTime - performance.now());
+      seqState.timerId = setTimeout(tickSequencerStep, delay);
+    };
+
+    const SKIFF_REMOTE_CC = {
+      FX: 102, SEL: 103, ENV: 104, LFO: 105, EDIT: 106, GLO: 107, HOME: 108,
+      SAVE: 109, ARP: 110, SEQ: 111, PLAY: 112, REC: 113, OCT_DOWN: 114, OCT_UP: 115,
+    };
+
+    const tapSkiffRemote = async (buttonName) => {
+      const out = getSelectedMidiOut();
+      const cc = SKIFF_REMOTE_CC[buttonName];
+      const rCh = (Number(byId('skiff-remote-ch')?.value || 16) - 1) & 0x0f;
+      if (!out || cc === undefined) {
+        setLog(`Skiff ${buttonName} skipped: select a MIDI Out port first.`);
+        return false;
+      }
+      await sendMidiPacket(out, [0xb0 | rCh, cc, 127]);
+      setTimeout(() => {
+        sendMidiPacket(out, [0xb0 | rCh, cc, 0]).catch(() => {});
+      }, 90);
+      clientLog('info', 'skiff-remote', `Tapped Skiff REMOTE ${buttonName} (Ch ${rCh + 1} CC ${cc})`);
+      return true;
+    };
+
+    const recordPatternToSkiffTrack = async () => {
+      const entry = getActivePatternEntry();
+      const out = getSelectedMidiOut();
+      if (!entry) return;
+      if (!out) {
+        setLog('Record to Skiff aborted: select your Skiff MIDI Out port first.');
+        return;
+      }
+      if (seqState.playing) {
+        byId('btn-seq-play').click();
+      }
+      const trackChNum = Number(byId('midi-ch-select').value || 1);
+      const trackCh = (trackChNum - 1) & 0x0f;
+      const bpm = Math.max(60, Math.min(180, Number(byId('seq-bpm').value || entry.pattern.bpm) || 124));
+      const stepMs = (60000 / bpm) / 4;
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      setLog(`Recording "${entry.pattern.patternName}" -> Skiff Track Ch ${trackChNum} @ ${bpm} BPM (1 bar)...`);
+      await sendMidiPacket(out, [0xfa]);
+      await tapSkiffRemote('PLAY');
+      await sleep(60);
+      await tapSkiffRemote('REC');
+      await sleep(80);
+
+      for (let i = 0; i < 16; i += 1) {
+        const stepStart = performance.now();
+        const s = entry.pattern.steps[i];
+        scheduleStepClockTicks(out, stepMs);
+        if (s && s.note !== null) {
+          const vel = s.accent ? Math.min(127, Math.round(s.velocity * 1.15)) : s.velocity;
+          const gateMs = Math.max(25, Math.min(stepMs * 0.95, s.slide ? stepMs * 0.92 : stepMs * 0.65));
+          sendMidiPacket(out, [0x90 | trackCh, s.note, vel]).catch(() => {});
+          setTimeout(() => {
+            sendMidiPacket(out, [0x80 | trackCh, s.note, 0]).catch(() => {});
+          }, gateMs);
+        }
+        const elapsed = performance.now() - stepStart;
+        if (elapsed < stepMs) {
+          await sleep(stepMs - elapsed);
+        }
+      }
+
+      clearClockTimers();
+      await tapSkiffRemote('REC');
+      await sleep(40);
+      await tapSkiffRemote('PLAY');
+      await sendMidiPacket(out, [0xfc]);
+      await sendMidiPacket(out, [0xb0 | trackCh, 123, 0]);
+      setLog(`Recorded "${entry.pattern.patternName}" into Skiff Track Ch ${trackChNum} (ready to edit in Skiff)`);
+      clientLog('info', 'skiff-remote', `Completed 1-bar clocked record of "${entry.pattern.patternName}" -> Skiff Ch ${trackChNum}`);
+    };
+
+    const refreshAtekFlashPresets = async (selectSlot = null) => {
+      try {
+        const data = await api('/atek/flash/presets');
+        const sel = byId('atek-slot-select');
+        const countEl = byId('atek-flash-count');
+        const padsEl = byId('atek-slot-pads');
+        if (!sel) return 0;
+        const presets = data.presets || [];
+        const savedSlots = presets.filter((p) => p.used);
+        if (countEl) {
+          countEl.textContent = `${savedSlots.length} saved in .flash`;
+        }
+        const prev = selectSlot || sel.value || (savedSlots[0] ? String(savedSlots[0].slot) : '13');
+        sel.innerHTML = presets.map((p) => {
+          const emptyLabel = p.slot <= 12 ? '(Factory ROM)' : '(Empty User Slot)';
+          const label = p.used
+            ? `#${String(p.slot).padStart(2, '0')} ${escHtml(p.name)} (${p.bpm || '?'} BPM)`
+            : `#${String(p.slot).padStart(2, '0')} ${emptyLabel}`;
+          return `<option value="${p.slot}">${label}</option>`;
+        }).join('');
+        if (presets.some((p) => String(p.slot) === String(prev))) {
+          sel.value = String(prev);
+        }
+
+        if (padsEl) {
+          const activeSlot = String(sel.value);
+          const nextEmpty = presets.find((p) => p.slot >= 13 && !p.used) || presets.find((p) => !p.used);
+          const padHtml = savedSlots.map((p) => {
+            const isAct = String(p.slot) === activeSlot;
+            return `<button type="button" class="slot-pad ${isAct ? 'active' : ''}" data-slot="${p.slot}" title="Left-click: Pull #${p.slot} into Section 2B · Right-click: Jump ATEK303 straight to Slot #${p.slot}">#${String(p.slot).padStart(2, '0')} ${escHtml(p.name)} (${p.bpm || '?'})</button>`;
+          }).join('');
+          const nextHtml = nextEmpty
+            ? `<button type="button" class="slot-pad empty-next" data-empty-slot="${nextEmpty.slot}" title="Select next unused user slot (#${nextEmpty.slot}) as Push target">+ Next Empty (#${nextEmpty.slot})</button>`
+            : '';
+          padsEl.innerHTML = padHtml + nextHtml || '<span style="font-size:11px;color:var(--muted);">No saved .flash slots yet — push a pattern to Slot #13.</span>';
+
+          padsEl.querySelectorAll('[data-slot]').forEach((btn) => {
+            const slotNum = Number(btn.dataset.slot);
+            btn.addEventListener('click', () => {
+              sel.value = String(slotNum);
+              pullAtekSlot(slotNum);
+            });
+            btn.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              sel.value = String(slotNum);
+              jumpAtekToSlot(slotNum);
+            });
+          });
+
+          padsEl.querySelectorAll('[data-empty-slot]').forEach((btn) => {
+            const slotNum = Number(btn.dataset.emptySlot);
+            btn.addEventListener('click', () => {
+              sel.value = String(slotNum);
+              refreshAtekFlashPresets(slotNum);
+              setLog(`Selected empty User Slot #${slotNum} as ATEK303 push target`);
+            });
+          });
+        }
+        return savedSlots.length;
+      } catch {
+        return 0;
+      }
+    };
+
+    const refreshPatterns = async (selectId = null) => {
+      try {
+        const data = await api('/patterns');
+        seqState.patterns = data.patterns || [];
+        if (selectId && seqState.patterns.some((p) => p.id === selectId)) {
+          if (seqState.playing) {
+            seqState.queuedId = selectId;
+          } else {
+            seqState.activeId = selectId;
+            const entry = getActivePatternEntry();
+            if (entry) {
+              seqState.bpm = entry.pattern.bpm;
+              byId('seq-bpm').value = String(entry.pattern.bpm);
+            }
+          }
+        } else if (!seqState.activeId && seqState.patterns.length) {
+          seqState.activeId = seqState.patterns[0].id;
+          seqState.bpm = seqState.patterns[0].pattern.bpm;
+          byId('seq-bpm').value = String(seqState.bpm);
+        }
+        renderSequencer();
+      } catch {}
+    };
+
+    const initOptions = async () => {
+      const [stylesData, fm1, snapData, ccInfo] = await Promise.all([
+        api('/styles'),
+        api('/fm1/status'),
+        api('/snap-fx'),
+        api('/midi-cc?ch=1&mode=atek303'),
+      ]);
+      byId('style-select').innerHTML = stylesData.styles
+        .map((s) => `<option value="${s}">${s}</option>`)
+        .join('');
+      byId('fw-select').innerHTML = fm1.firmwares
+        .map((f) => `<option value="${f}" ${f === '04_atek303.fwsc' ? 'selected' : ''}>${f}</option>`)
+        .join('');
+      const waveSel = byId('atek-wave-select');
+      if (waveSel && Array.isArray(ccInfo?.waves)) {
+        waveSel.innerHTML = '<option value="">Auto (Follow Patch)</option>' +
+          ccInfo.waves.map((w, idx) => `<option value="${idx}">${idx + 1}. ${escHtml(w)}</option>`).join('');
+      }
+      renderSnapFxGrid(snapData.effects || []);
+      await Promise.all([refreshFavorites(), refreshPatterns(), refreshAtekFlashPresets()]);
+    };
+
+    window.triggerSlot = async (id) => {
+      const res = await api(`/slot/${id}/consume`, { method: 'POST' });
+      setLog(res.success ? `Triggered Slot ${id}: ${res.value.patchName}` : `Error: ${res.error}`);
+      refresh();
+    };
+
+    byId('btn-launch').addEventListener('click', async () => {
+      const firmware = byId('fw-select').value;
+      const mhz = Number(byId('mhz-select').value);
+      const res = await api('/fm1/launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firmware, mhz }),
+      });
+      setLog(res.success ? `Opened FM-1 window (${firmware}, PID ${res.value.pid})` : `Launch failed: ${res.error}`);
+      refresh();
+    });
+
+    byId('btn-stop').addEventListener('click', async () => {
+      const res = await api('/fm1/stop', { method: 'POST' });
+      setLog(res.stopped ? `Stopped FM-1 (PID ${res.pid})` : res.message);
+      refresh();
+    });
+
+    byId('btn-warm').addEventListener('click', async () => {
+      const style = byId('style-select').value;
+      setLog(`Loading style "${style}" and warming 4 slots via Unsloth...`);
+      const res = await api(`/style/${style}`, { method: 'POST' });
+      setLog(res.success ? `Style "${style}" initiated (Epoch ${res.value.epoch}).` : `Error: ${res.error}`);
+      refresh();
+    });
+
+    byId('btn-drift-down').addEventListener('click', async () => {
+      const res = await api('/drift', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deltaRatio: -0.15 }),
+      });
+      if (res.success) setLog('Applied Harmonic Drift (-0.15)');
+      refresh();
+    });
+
+    byId('btn-drift-up').addEventListener('click', async () => {
+      const res = await api('/drift', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deltaRatio: 0.15 }),
+      });
+      if (res.success) setLog('Applied Harmonic Drift (+0.15)');
+      refresh();
+    });
+
+    byId('btn-roulette').addEventListener('click', async () => {
+      const res = await api('/roulette', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (res.success) {
+        setLog(`Algorithm Roulette -> Algo ${res.value.algorithm}${res.flavor ? ` · ${res.flavor.name}` : ''}`);
+      }
+      refresh();
+    });
+
+    byId('btn-roulette-back').addEventListener('click', async () => {
+      const res = await api('/roulette/back', { method: 'POST' });
+      if (res.success) {
+        setLog(`Roulette Back -> ${res.value.patchName} (Algo ${res.value.algorithm})`);
+        sendActivePatchCcs('roulette-back');
+      } else {
+        setLog(res.error || 'No previous roulette settings.');
+      }
+      refresh();
+    });
+
+    byId('roulette-slider').addEventListener('input', async (e) => {
+      const position = Number(e.target.value) / 100;
+      const rMax = Number(e.target.max || 100) / 100;
+      byId('roulette-pos').textContent = rMax <= 1 ? `${Math.round(position * 100)}%` : `${position.toFixed(2)}/${rMax}`;
+      const res = await api('/roulette/slide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position }),
+      });
+      if (res.success) {
+        setLog(`Roulette Slide -> ${res.value.patchName} (Algo ${res.value.algorithm})`);
+      }
+      refresh();
+    });
+
+    byId('btn-smart-assign').addEventListener('click', async () => {
+      setLog('Asking Unsloth to assign 3 expressive parameters to Smart Macro...');
+      const res = await api('/macro/assign', { method: 'POST' });
+      setLog(res.success ? `Smart Macro "${res.value.macro.macroName}" assigned!` : `Smart Macro failed: ${res.error}`);
+      refresh();
+    });
+
+    byId('smart-slider').addEventListener('input', async (e) => {
+      const pct = Number(e.target.value);
+      byId('smart-pct').textContent = `${pct}%`;
+      const res = await api('/macro/value', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: pct / 100 }),
+      });
+      if (res.success) setLog(`Smart Macro -> ${pct}%`);
+      refresh();
+    });
+
+    byId('btn-fav-save').addEventListener('click', async () => {
+      const res = await api('/favorites/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (res.success) {
+        setLog(`Saved favorite "${res.value.patchName}"`);
+        await refreshFavorites(res.value.id);
+      } else {
+        setLog(`Save failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('btn-fav-load').addEventListener('click', async () => {
+      const id = byId('fav-select').value;
+      if (!id) return;
+      const res = await api(`/favorites/${encodeURIComponent(id)}/load`, { method: 'POST' });
+      setLog(res.success ? `Loaded favorite "${res.value.patchName}"` : `Load failed: ${res.error}`);
+      refresh();
+    });
+
+    byId('btn-fav-delete').addEventListener('click', async () => {
+      const id = byId('fav-select').value;
+      if (!id) return;
+      const res = await api(`/favorites/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (res.success) {
+        setLog(`Deleted favorite "${id}"`);
+        await refreshFavorites();
+      } else {
+        setLog(`Delete failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('morph-slider').addEventListener('input', async (e) => {
+      const pct = Number(e.target.value);
+      byId('morph-pct').textContent = `${pct}%`;
+      const slotId = Number(byId('morph-slot').value);
+      const res = await api('/morph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slotId, amount: pct / 100 }),
+      });
+      if (res.success) setLog(`Morphed ${pct}% toward Slot ${slotId}`);
+      refresh();
+    });
+
+    if (window.fm1Desktop && typeof window.fm1Desktop.toggleDevTools === 'function') {
+      const btnDevTools = byId('btn-devtools');
+      btnDevTools.style.display = 'inline-block';
+      btnDevTools.addEventListener('click', () => window.fm1Desktop.toggleDevTools());
+    }
+
+    byId('btn-clear-logs').addEventListener('click', async () => {
+      await api('/logs/clear', { method: 'POST' });
+      refresh();
+    });
+
+    byId('btn-seq-play').addEventListener('click', () => {
+      const out = getSelectedMidiOut();
+      const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+      const sendClk = byId('chk-seq-clock')?.checked;
+      if (seqState.playing) {
+        seqState.playing = false;
+        if (seqState.timerId) clearTimeout(seqState.timerId);
+        clearClockTimers();
+        seqState.timerId = null;
+        seqState.step = 0;
+        seqState.currentStep = 0;
+        seqState.justRecordedStep = null;
+        seqState.queuedId = null;
+        if (out) {
+          if (sendClk) sendMidiPacket(out, [0xfc]).catch(() => {});
+          sendMidiPacket(out, [0xb0 | ch, 123, 0]).catch(() => {});
+        }
+        setLog('Pattern sequencer stopped');
+        renderSequencer();
+      } else {
+        seqState.playing = true;
+        seqState.step = 0;
+        seqState.currentStep = 0;
+        seqState.justRecordedStep = null;
+        seqState.nextTickTime = performance.now();
+        seqState.bpm = Number(byId('seq-bpm').value || 124);
+        if (out && sendClk) {
+          sendMidiPacket(out, [0xfa]).catch(() => {});
+        }
+        setLog(`Pattern sequencer started (${seqState.bpm} BPM${sendClk ? ' + 24 PPQN Clock' : ''})`);
+        tickSequencerStep();
+      }
+    });
+
+    byId('seq-bpm').addEventListener('change', (e) => {
+      seqState.bpm = Math.max(60, Math.min(180, Number(e.target.value) || 124));
+      renderSequencer();
+    });
+
+    const refineActivePattern = async (feedback) => {
+      const text = String(feedback || '').trim();
+      if (!text) {
+        setLog('Enter a comment (e.g. "calmer", "more energetic", "more Devo style") first.');
+        return;
+      }
+      const bpm = Math.max(60, Math.min(180, Number(byId('seq-bpm').value) || 126));
+      const entry = getActivePatternEntry();
+      setLog(`Refining "${entry ? entry.pattern.patternName : 'active pattern'}" (${text})...`);
+      const res = await api('/patterns/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patternId: seqState.activeId,
+          pattern: entry ? entry.pattern : null,
+          feedback: text,
+          bpm,
+        }),
+      });
+      if (res.success) {
+        setLog(`Refined -> "${res.value.pattern.patternName}" (${seqState.playing ? 'queued for end of bar' : 'loaded'})`);
+        await refreshPatterns(res.value.id);
+      } else {
+        setLog(`Pattern refine failed: ${res.error}`);
+      }
+      refresh();
+    };
+
+    byId('btn-seq-gen').addEventListener('click', async () => {
+      const bpm = Math.max(60, Math.min(180, Number(byId('seq-bpm').value) || 126));
+      const prompt = byId('seq-prompt').value.trim();
+      setLog(`Designing new 16-step sequence${prompt ? ` ("${prompt}")` : ''} via Unsloth @ ${bpm} BPM...`);
+      const res = await api('/patterns/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bpm, prompt }),
+      });
+      if (res.success) {
+        setLog(`Designed "${res.value.pattern.patternName}" (${seqState.playing ? 'queued for end of bar' : 'loaded'})`);
+        await refreshPatterns(res.value.id);
+      } else {
+        setLog(`Pattern generation failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('btn-seq-refine').addEventListener('click', () => {
+      refineActivePattern(byId('seq-prompt').value);
+    });
+
+    document.querySelectorAll('.seq-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        byId('seq-prompt').value = chip.dataset.feedback;
+        refineActivePattern(chip.dataset.feedback);
+      });
+    });
+
+    const deleteSelectedPattern = async () => {
+      const target =
+        (seqState.queuedId && seqState.patterns.find((p) => p.id === seqState.queuedId)) ||
+        getActivePatternEntry();
+      if (!target) return;
+      if (target.builtin) {
+        setLog(`Cannot delete built-in pattern "${target.pattern.patternName}".`);
+        return;
+      }
+      const res = await api(`/patterns/${encodeURIComponent(target.id)}`, { method: 'DELETE' });
+      if (res.success) {
+        if (seqState.activeId === target.id) seqState.activeId = null;
+        if (seqState.queuedId === target.id) seqState.queuedId = null;
+        setLog(`Deleted pattern "${target.pattern.patternName}"`);
+        await refreshPatterns();
+      } else {
+        setLog(`Delete pattern failed: ${res.error}`);
+      }
+      refresh();
+    };
+
+    byId('btn-seq-del').addEventListener('click', deleteSelectedPattern);
+
+    byId('btn-seq-blank').addEventListener('click', async () => {
+      const customCount = seqState.patterns.filter((p) => !p.builtin).length + 1;
+      const bpm = Math.max(60, Math.min(180, Number(byId('seq-bpm').value) || 124));
+      const typedName = byId('seq-prompt').value.trim();
+      const patternName = typedName || `Blank Pattern ${customCount}`;
+      const blankPattern = {
+        patternName,
+        bpm,
+        rootKey: 'C minor',
+        steps: Array.from({ length: 16 }, () => ({ note: null, velocity: 96, accent: false, slide: false })),
+      };
+      const res = await api('/patterns/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pattern: blankPattern }),
+      });
+      if (res.success) {
+        seqState.cursorStep = 0;
+        seqState.recording = true;
+        await refreshPatterns(res.value.id);
+        setLog(`Created "${res.value.pattern.patternName}" & armed step recording (MIDI In or keys A-K)`);
+      } else {
+        setLog(`Create blank pattern failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('btn-seq-rec').addEventListener('click', () => {
+      seqState.recording = !seqState.recording;
+      setLog(seqState.recording
+        ? `Armed MIDI step recording at Step ${seqState.cursorStep + 1}/16 (Left-click selects step, Right-click clears)`
+        : 'Disarmed MIDI pattern recording');
+      renderSequencer();
+    });
+
+    byId('btn-fm1-play').addEventListener('click', () => sendFm1PanelButton('PLAY'));
+    byId('btn-fm1-rec').addEventListener('click', () => sendFm1PanelButton('REC'));
+    byId('btn-fm1-seq').addEventListener('click', () => sendFm1PanelButton('SEQ'));
+    byId('btn-fm1-env').addEventListener('click', () => sendFm1PanelButton('ENV'));
+    byId('btn-fm1-lfo').addEventListener('click', () => sendFm1PanelButton('LFO'));
+    byId('btn-fm1-arp').addEventListener('click', () => sendFm1PanelButton('ARP'));
+    byId('btn-fm1-preload').addEventListener('click', preloadPatternToFm1);
+
+    byId('btn-atek-refresh').addEventListener('click', async () => {
+      const count = await refreshAtekFlashPresets();
+      setLog(`Refreshed saves/04_atek303.flash (${count} saved preset${count === 1 ? '' : 's'} found)`);
+    });
+
+    byId('btn-atek-push').addEventListener('click', async () => {
+      const slot = Number(byId('atek-slot-select')?.value || 13);
+      const reloadFm1 = Boolean(byId('chk-atek-reload')?.checked);
+      const entry = getActivePatternEntry();
+      if (!entry) return;
+      const res = await api('/atek/flash/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slot,
+          patternId: entry.id,
+          pattern: entry.pattern,
+          name: entry.pattern.patternName,
+          setActive: true,
+          reloadFm1,
+        }),
+      });
+      if (res.success) {
+        await refreshAtekFlashPresets(slot);
+        setLog(
+          `Pushed "${res.name}" -> ATEK303 Flash Slot #${slot}` +
+          (res.reloaded ? ' (reloaded ATEK303 window — press PLAY!)' : ' (set active; select Slot #' + slot + ' in ATEK303)')
+        );
+      } else {
+        setLog(`ATEK303 Flash push failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    const pullAtekSlot = async (slotNum) => {
+      const slot = Number(slotNum || byId('atek-slot-select')?.value || 1);
+      const res = await api('/atek/flash/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot }),
+      });
+      if (res.success) {
+        await refreshPatterns(res.value.id);
+        await refreshAtekFlashPresets(slot);
+        setLog(`Pulled ATEK303 Slot #${slot} ("${res.name}") into Section 2B for editing / playback`);
+      } else {
+        setLog(`ATEK303 Flash pull failed: ${res.error}`);
+      }
+      refresh();
+    };
+
+    const jumpAtekToSlot = async (slotNum) => {
+      const slot = Number(slotNum || byId('atek-slot-select')?.value || 1);
+      const reloadFm1 = Boolean(byId('chk-atek-reload')?.checked);
+      const res = await api('/atek/flash/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot, reloadFm1 }),
+      });
+      if (res.success) {
+        await refreshAtekFlashPresets(slot);
+        setLog(
+          `Jumped ATEK303 -> Slot #${slot} ("${res.name}")` +
+          (res.reloaded ? ' (reloaded ATEK303 window — press PLAY!)' : ' (set active in .flash)')
+        );
+      } else {
+        setLog(`Jump ATEK303 failed: ${res.error}`);
+      }
+      refresh();
+    };
+
+    byId('btn-atek-pull').addEventListener('click', () => {
+      pullAtekSlot(Number(byId('atek-slot-select')?.value || 1));
+    });
+
+    byId('btn-atek-jump').addEventListener('click', () => {
+      jumpAtekToSlot(Number(byId('atek-slot-select')?.value || 1));
+    });
+
+    byId('atek-slot-select').addEventListener('change', (e) => {
+      refreshAtekFlashPresets(Number(e.target.value));
+    });
+
+    const syncSkiffTrackJumps = (nextCh = null) => {
+      const chSel = byId('midi-ch-select');
+      if (nextCh !== null && chSel) {
+        chSel.value = String(nextCh);
+      }
+      const activeCh = Number(chSel?.value || 1);
+      document.querySelectorAll('#skiff-track-jumps .track-jump-btn').forEach((btn) => {
+        btn.classList.toggle('active', Number(btn.dataset.ch) === activeCh);
+      });
+    };
+
+    document.querySelectorAll('#skiff-track-jumps .track-jump-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ch = Number(btn.dataset.ch || 1);
+        syncSkiffTrackJumps(ch);
+        setLog(`Jumped MIDI Channel -> Track T${ch} (Ch ${ch})`);
+      });
+    });
+
+    byId('midi-ch-select').addEventListener('change', () => {
+      syncSkiffTrackJumps();
+    });
+
+    document.querySelectorAll('.jump-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = document.getElementById(btn.dataset.jump);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    byId('btn-skiff-play').addEventListener('click', () => tapSkiffRemote('PLAY'));
+    byId('btn-skiff-rec').addEventListener('click', () => tapSkiffRemote('REC'));
+    byId('btn-skiff-edit').addEventListener('click', () => tapSkiffRemote('EDIT'));
+    byId('btn-skiff-save').addEventListener('click', () => tapSkiffRemote('SAVE'));
+    byId('btn-skiff-rec-pat').addEventListener('click', recordPatternToSkiffTrack);
+
+    const compState = {
+      composition: null,
+      playing: false,
+      mutedTracks: new Set(),
+      playTimers: [],
+      clockIntervalId: null,
+      loopTimerId: null,
+    };
+
+    const renderCompositionUi = () => {
+      const comp = compState.composition;
+      const badge = byId('comp-badge');
+      const tracksEl = byId('comp-tracks');
+      const trackSel = byId('comp-track-select');
+      const playBtn = byId('btn-comp-play');
+      if (playBtn) {
+        playBtn.textContent = compState.playing ? '▶ Playing...' : '▶ Play Composition';
+      }
+      if (!comp) {
+        badge.textContent = 'No composition loaded';
+        tracksEl.innerHTML = '';
+        trackSel.innerHTML = '<option value="0">(No tracks)</option>';
+        return;
+      }
+      badge.textContent = `${comp.title} · ${comp.tempo_bpm} BPM · ${comp.length_beats} beats · ${comp.tracks.length} track(s)`;
+      const prevIdx = Number(trackSel.value || 0);
+      trackSel.innerHTML = comp.tracks
+        .map((tr, idx) => `<option value="${idx}">Ch ${tr.channel}: ${escHtml(tr.name)} (${tr.notes.length})</option>`)
+        .join('');
+      const selectedIdx = comp.tracks[prevIdx] ? prevIdx : 0;
+      trackSel.value = String(selectedIdx);
+
+      tracksEl.innerHTML = comp.tracks.map((tr, idx) => {
+        const isMuted = compState.mutedTracks.has(idx);
+        const isSel = idx === selectedIdx;
+        return `
+          <div class="comp-track-pill ${isMuted ? 'muted' : ''} ${isSel ? 'active-track' : ''}" title="Checkbox mutes track · Click name to jump to Track #${idx + 1} (Ch ${tr.channel})">
+            <input type="checkbox" class="comp-mute-chk" data-track-idx="${idx}" ${isMuted ? '' : 'checked'} />
+            <span class="comp-track-jump" data-jump-idx="${idx}" style="cursor:pointer;">Ch ${tr.channel} · <b>${escHtml(tr.name)}</b> (${escHtml(tr.role)}, ${tr.notes.length} notes)</span>
+          </div>
+        `;
+      }).join('');
+      tracksEl.querySelectorAll('.comp-mute-chk').forEach((chk) => {
+        chk.addEventListener('change', (e) => {
+          const idx = Number(e.target.dataset.trackIdx);
+          if (e.target.checked) compState.mutedTracks.delete(idx);
+          else compState.mutedTracks.add(idx);
+          renderCompositionUi();
+        });
+      });
+      tracksEl.querySelectorAll('.comp-track-jump').forEach((lbl) => {
+        lbl.addEventListener('click', () => {
+          const idx = Number(lbl.dataset.jumpIdx || 0);
+          const tr = comp.tracks[idx];
+          trackSel.value = String(idx);
+          if (tr && tr.channel >= 1 && tr.channel <= 6) {
+            syncSkiffTrackJumps(tr.channel);
+          }
+          setLog(`Jumped to Track #${idx + 1} "${tr?.name || ''}" (Ch ${tr?.channel || 1})`);
+          renderCompositionUi();
+        });
+      });
+    };
+
+    const clearCompositionTimers = (sendStop = true) => {
+      while (compState.playTimers.length) {
+        clearTimeout(compState.playTimers.pop());
+      }
+      if (compState.clockIntervalId) {
+        clearInterval(compState.clockIntervalId);
+        compState.clockIntervalId = null;
+      }
+      if (compState.loopTimerId) {
+        clearTimeout(compState.loopTimerId);
+        compState.loopTimerId = null;
+      }
+      compState.playing = false;
+      if (sendStop) {
+        const out = getSelectedMidiOut();
+        const sendClk = byId('chk-seq-clock')?.checked;
+        if (out) {
+          if (sendClk) sendMidiPacket(out, [0xfc]).catch(() => {});
+          const channels = compState.composition
+            ? [...new Set(compState.composition.tracks.map((t) => (t.channel - 1) & 0x0f))]
+            : [0];
+          channels.forEach((ch) => sendMidiPacket(out, [0xb0 | ch, 123, 0]).catch(() => {}));
+        }
+      }
+      renderCompositionUi();
+    };
+
+    const setLoadedComposition = (comp) => {
+      compState.composition = comp;
+      compState.mutedTracks.clear();
+      byId('comp-json').value = JSON.stringify(comp, null, 2);
+      renderCompositionUi();
+    };
+
+    const importCompositionFromTextarea = async () => {
+      const raw = byId('comp-json').value;
+      if (!raw.trim()) {
+        return { success: false, error: 'Paste composition JSON or click Generate JSON (AI) first.' };
+      }
+      const res = await api('/compositions/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw }),
+      });
+      if (res.success) {
+        setLoadedComposition(res.value);
+      }
+      return res;
+    };
+
+    const scheduleCompositionPass = (comp, out, loopOnFinish) => {
+      const msPerBeat = 60000 / Math.max(40, Math.min(240, comp.tempo_bpm || 120));
+      const loopMs = Math.max(250, comp.length_beats * msPerBeat);
+      const sendClk = byId('chk-seq-clock')?.checked;
+      if (out && sendClk) {
+        if (compState.clockIntervalId) clearInterval(compState.clockIntervalId);
+        compState.clockIntervalId = setInterval(() => {
+          sendMidiPacket(out, [0xf8]).catch(() => {});
+        }, Math.max(4, msPerBeat / 24));
+      }
+      comp.tracks.forEach((tr, idx) => {
+        if (compState.mutedTracks.has(idx)) return;
+        const ch = (tr.channel - 1) & 0x0f;
+        tr.notes.forEach((n) => {
+          const onMs = Math.max(0, n.start * msPerBeat);
+          const offMs = Math.min(loopMs - 8, Math.max(onMs + 25, (n.start + n.dur) * msPerBeat));
+          if (onMs >= loopMs) return;
+          const vel = n.accent ? Math.min(127, Math.round(n.vel * 1.12)) : n.vel;
+          compState.playTimers.push(
+            setTimeout(() => {
+              if (out) sendMidiPacket(out, [0x90 | ch, n.midi, vel]).catch(() => {});
+              playWebAudioFmNote(n.midi, vel, Math.max(0.05, (offMs - onMs) / 1000));
+            }, onMs)
+          );
+          compState.playTimers.push(
+            setTimeout(() => {
+              if (out) sendMidiPacket(out, [0x80 | ch, n.midi, 0]).catch(() => {});
+            }, offMs)
+          );
+        });
+      });
+      return loopMs;
+    };
+
+    byId('btn-comp-import').addEventListener('click', async () => {
+      const res = await importCompositionFromTextarea();
+      setLog(
+        res.success
+          ? `Imported composition "${res.value.title}" (${res.value.tracks.length} tracks, ${res.value.length_beats} beats)`
+          : `Import failed: ${res.error}`
+      );
+    });
+
+    byId('btn-comp-copy-guide').addEventListener('click', async () => {
+      const res = await api('/compositions/prompt-guide');
+      if (res.success && res.guide) {
+        try {
+          await navigator.clipboard.writeText(res.guide);
+          setLog('Copied hub/prompts/fm1-midi-composition.md rules to clipboard.');
+        } catch {
+          byId('comp-json').value = res.guide;
+          setLog('Clipboard unavailable — loaded skill prompt into composition box.');
+        }
+      }
+    });
+
+    byId('btn-comp-gen').addEventListener('click', async () => {
+      const prompt = byId('comp-prompt').value.trim();
+      const target = byId('comp-target').value;
+      const lengthBeats = Number(byId('comp-beats').value || 8);
+      const bpm = Math.max(60, Math.min(180, Number(byId('seq-bpm').value) || 120));
+      setLog(`Generating ${target} MIDI composition JSON (${bpm} BPM, ${lengthBeats} beats)...`);
+      const res = await api('/compositions/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, target, bpm, lengthBeats }),
+      });
+      if (res.success) {
+        setLoadedComposition(res.value);
+        setLog(`Generated composition "${res.value.title}" (${res.value.tracks.length} tracks)`);
+      } else {
+        setLog(`Composition generation failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('btn-comp-refine').addEventListener('click', async () => {
+      const feedback = byId('comp-prompt').value.trim();
+      if (!feedback) {
+        setLog('Enter a requested change in the motif box first.');
+        return;
+      }
+      if (!compState.composition) {
+        const imp = await importCompositionFromTextarea();
+        if (!imp.success) {
+          setLog(`Refine failed: ${imp.error}`);
+          return;
+        }
+      }
+      setLog(`Refining composition "${compState.composition.title}" (${feedback})...`);
+      const res = await api('/compositions/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ composition: compState.composition, feedback }),
+      });
+      if (res.success) {
+        setLoadedComposition(res.value);
+        setLog(`Refined composition -> "${res.value.title}"`);
+      } else {
+        setLog(`Composition refine failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('btn-comp-play').addEventListener('click', async () => {
+      if (!compState.composition) {
+        const imp = await importCompositionFromTextarea();
+        if (!imp.success) {
+          setLog(`Play failed: ${imp.error}`);
+          return;
+        }
+      }
+      if (seqState.playing) byId('btn-seq-play').click();
+      clearCompositionTimers(false);
+      compState.playing = true;
+      renderCompositionUi();
+      const out = getSelectedMidiOut();
+      if (out && byId('chk-seq-clock')?.checked) {
+        await sendMidiPacket(out, [0xfa]).catch(() => {});
+      }
+      const runNextPass = () => {
+        if (!compState.playing || !compState.composition) return;
+        const loopMs = scheduleCompositionPass(compState.composition, out, true);
+        compState.loopTimerId = setTimeout(runNextPass, loopMs);
+      };
+      setLog(`Playing "${compState.composition.title}" (${compState.composition.tempo_bpm} BPM)`);
+      runNextPass();
+    });
+
+    byId('btn-comp-stop').addEventListener('click', () => {
+      clearCompositionTimers(true);
+      setLog('Multi-track composition stopped');
+    });
+
+    byId('btn-comp-rec-skiff').addEventListener('click', async () => {
+      if (!compState.composition) {
+        const imp = await importCompositionFromTextarea();
+        if (!imp.success) {
+          setLog(`Record to Skiff failed: ${imp.error}`);
+          return;
+        }
+      }
+      const out = getSelectedMidiOut();
+      if (!out) {
+        setLog('Record to Skiff aborted: select your Skiff MIDI Out port first.');
+        return;
+      }
+      if (seqState.playing) byId('btn-seq-play').click();
+      clearCompositionTimers(false);
+      const comp = compState.composition;
+      setLog(`Recording "${comp.title}" (${comp.length_beats} beats @ ${comp.tempo_bpm} BPM) into Skiff...`);
+      await sendMidiPacket(out, [0xfa]);
+      await tapSkiffRemote('PLAY');
+      await new Promise((r) => setTimeout(r, 60));
+      await tapSkiffRemote('REC');
+      await new Promise((r) => setTimeout(r, 80));
+      const loopMs = scheduleCompositionPass(comp, out, false);
+      await new Promise((r) => setTimeout(r, loopMs + 20));
+      clearCompositionTimers(false);
+      await tapSkiffRemote('REC');
+      await new Promise((r) => setTimeout(r, 40));
+      await tapSkiffRemote('PLAY');
+      await sendMidiPacket(out, [0xfc]);
+      comp.tracks.forEach((tr) => sendMidiPacket(out, [0xb0 | ((tr.channel - 1) & 0x0f), 123, 0]).catch(() => {}));
+      setLog(`Recorded "${comp.title}" into Skiff! (Channels 1–4 populated)`);
+    });
+
+    const pushCompositionToAtek = async (allTracks) => {
+      if (!compState.composition) {
+        const imp = await importCompositionFromTextarea();
+        if (!imp.success) {
+          setLog(`Send to ATEK303 failed: ${imp.error}`);
+          return;
+        }
+      }
+      const startSlot = Number(byId('atek-slot-select')?.value || 13);
+      const trackIndex = Number(byId('comp-track-select')?.value || 0);
+      const reloadFm1 = Boolean(byId('chk-atek-reload')?.checked);
+      const res = await api('/atek/flash/export-composition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          composition: compState.composition,
+          trackIndex,
+          allTracks,
+          startSlot,
+          setActive: true,
+          reloadFm1,
+        }),
+      });
+      if (res.success) {
+        const firstSlot = res.written?.[0]?.slot ?? startSlot;
+        await refreshAtekFlashPresets(firstSlot);
+        const slotList = (res.written || []).map((w) => `#${w.slot} (${w.name})`).join(', ');
+        setLog(
+          `Sent ${res.written.length} track(s) -> ATEK303 Flash ${slotList}` +
+          (res.reloaded ? ' (reloaded ATEK303 window — press PLAY!)' : '')
+        );
+      } else {
+        setLog(`Send to ATEK303 failed: ${res.error}`);
+      }
+      refresh();
+    };
+
+    byId('btn-comp-push-atek').addEventListener('click', () => pushCompositionToAtek(false));
+    byId('btn-comp-push-atek-all').addEventListener('click', () => pushCompositionToAtek(true));
+    byId('comp-track-select').addEventListener('change', () => renderCompositionUi());
+
+    byId('btn-comp-to-seq').addEventListener('click', async () => {
+      if (!compState.composition) {
+        const imp = await importCompositionFromTextarea();
+        if (!imp.success) {
+          setLog(`Convert failed: ${imp.error}`);
+          return;
+        }
+      }
+      const trackIndex = Number(byId('comp-track-select')?.value || 0);
+      const res = await api('/compositions/to-pattern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ composition: compState.composition, trackIndex, save: true }),
+      });
+      if (res.success) {
+        await refreshPatterns(res.value.id);
+        setLog(`Loaded track #${trackIndex + 1} into Section 2B ("${res.value.pattern.patternName}")`);
+      } else {
+        setLog(`Load to 16-step grid failed: ${res.error}`);
+      }
+      refresh();
+    });
+
+    byId('btn-comp-export-mid').addEventListener('click', async () => {
+      if (!compState.composition) {
+        const imp = await importCompositionFromTextarea();
+        if (!imp.success) {
+          setLog(`Export .mid failed: ${imp.error}`);
+          return;
+        }
+      }
+      const res = await fetch('/compositions/export-mid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ composition: compState.composition }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: res.statusText }));
+        setLog(`Export .mid failed: ${errData.error || res.statusText}`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${compState.composition.title.toLowerCase().replace(/[^a-z0-9_-]+/g, '_') || 'fm1_composition'}.mid`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setLog(`Downloaded "${a.download}"`);
+    });
+
+    byId('fw-select').addEventListener('change', (e) => {
+      const fw = String(e.target.value || '').toLowerCase();
+      byId('midi-profile-select').value = fw.includes('atek303')
+        ? 'atek303'
+        : (fw.includes('skiff') ? 'skiff' : 'fm');
+      sendActivePatchCcs('fw-change');
+    });
+
+    byId('midi-profile-select').addEventListener('change', () => {
+      sendActivePatchCcs('profile-change');
+    });
+
+    byId('atek-wave-select').addEventListener('change', async (e) => {
+      const val = e.target.value;
+      if (val === '') {
+        sendActivePatchCcs('wave-auto');
+        return;
+      }
+      const idx = Math.max(0, Math.min(13, Number(val) || 0));
+      const midiVal = Math.round((idx / 13) * 127);
+      const out = getSelectedMidiOut();
+      const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+      if (out) {
+        await sendMidiPacket(out, [0xb0 | ch, 79, midiVal]).catch(() => {});
+      }
+      setLog(`ATEK303 Wave -> ${e.target.options[e.target.selectedIndex]?.textContent || idx} (CC 79 = ${midiVal})`);
+    });
+
+    byId('btn-midi-rescan').addEventListener('click', () => {
+      bindMidiPorts();
+      clientLog('info', 'midi', 'Rescanned Windows MIDI ports');
+    });
+
+    byId('midi-in-select').addEventListener('change', (e) => {
+      midiState.selectedInId = e.target.value;
+      bindMidiPorts();
+    });
+
+    byId('midi-out-select').addEventListener('change', (e) => {
+      midiState.selectedOutId = e.target.value;
+      const out = getSelectedMidiOut();
+      if (!out) {
+        clientLog('info', 'midi', 'MIDI Out -> None');
+        return;
+      }
+      ensureMidiOutOpen(out)
+        .then((port) => {
+          clientLog('info', 'midi', `MIDI Out -> "${port.name}" (${port.connection})`);
+        })
+        .catch((err) => {
+          clientLog('error', 'midi', `Failed to open MIDI Out "${out.name}": ${err.message}`);
+        });
+    });
+
+    byId('btn-send-ccs').addEventListener('click', () => sendActivePatchCcs('manual'));
+
+    byId('btn-test-riff').addEventListener('click', async () => {
+      const notes = [36, 36, 48, 36, 39, 36, 41, 43];
+      const out = getSelectedMidiOut();
+      const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+      if (out) {
+        try {
+          await ensureMidiOutOpen(out);
+        } catch (err) {
+          clientLog('error', 'midi-tx', `Cannot open MIDI Out "${out.name}": ${err.message}`);
+        }
+      }
+      notes.forEach((n, idx) => {
+        setTimeout(() => {
+          if (out && out.connection === 'open') {
+            try {
+              out.send(new Uint8Array([0x90 | ch, n, 110]));
+              setTimeout(() => {
+                try { out.send(new Uint8Array([0x80 | ch, n, 0])); } catch {}
+              }, 120);
+            } catch (err) {
+              clientLog('error', 'midi-tx', `Note TX error: ${err.message}`);
+            }
+          }
+          playWebAudioFmNote(n, 110, 0.14);
+        }, idx * 130);
+      });
+      clientLog('info', 'midi-tx', `Played 8-step acid test riff (${out ? `${out.name} [${out.connection}]` : 'WebAudio preview'})`);
+    });
+
+    const keyMap = { KeyA: 36, KeyS: 38, KeyD: 39, KeyF: 41, KeyG: 43, KeyH: 44, KeyJ: 46, KeyK: 48 };
+    window.addEventListener('keydown', async (e) => {
+      const tag = e.target && e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'Delete' && !e.repeat) {
+        e.preventDefault();
+        deleteSelectedPattern();
+        return;
+      }
+      if (e.repeat || !keyMap[e.code]) return;
+      const note = keyMap[e.code];
+      const out = getSelectedMidiOut();
+      const ch = (Number(byId('midi-ch-select').value || 1) - 1) & 0x0f;
+      if (out) {
+        sendMidiPacket(out, [0x90 | ch, note, 110]).catch((err) => {
+          clientLog('error', 'midi-tx', `Key NoteOn failed: ${err.message}`);
+        });
+        setTimeout(() => {
+          sendMidiPacket(out, [0x80 | ch, note, 0]).catch(() => {});
+        }, 180);
+      }
+      playWebAudioFmNote(note, 110, 0.22);
+      if (seqState.recording) {
+        recordStepNote(note, 110);
+      }
+    });
+
+    initMidi();
+    initOptions().then(refresh);
+    setInterval(refresh, 500);
+  </script>
+</body>
+</html>

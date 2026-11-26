@@ -1,0 +1,17 @@
+# Dependencies & runtime state
+hub/node_modules/
+hub/.electron-data/
+**/__pycache__/
+*.pyc
+
+# Emulator binaries, third-party firmwares, and local flash saves
+*.exe
+*.fwsc
+*.flash
+saves/
+work/
+
+# Secrets & logs
+.env
+.env.*
+*.log

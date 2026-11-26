@@ -1,0 +1,109 @@
+{
+  "id": "phrygian_drive",
+  "builtin": false,
+  "style": "more energetic, busier 16th notes and accents",
+  "savedAt": "2026-11-25T06:36:42.653Z",
+  "pattern": {
+    "patternName": "Phrygian Drive",
+    "bpm": 138,
+    "rootKey": "C Phrygian",
+    "steps": [
+      {
+        "note": 24,
+        "velocity": 127,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 36,
+        "velocity": 118,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 122,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 24,
+        "velocity": 110,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 125,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 37,
+        "velocity": 112,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 95,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 31,
+        "velocity": 108,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 24,
+        "velocity": 92,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 120,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 36,
+        "velocity": 115,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 25,
+        "velocity": 104,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 31,
+        "velocity": 118,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 24,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 24,
+        "velocity": 100,
+        "accent": false,
+        "slide": true
+      },
+      {
+        "note": 37,
+        "velocity": 127,
+        "accent": true,
+        "slide": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "id": "frenzy_minor_drive",
+  "builtin": false,
+  "style": "more energetic, busier 16th notes and accents",
+  "savedAt": "2026-11-25T06:42:48.335Z",
+  "pattern": {
+    "patternName": "Frenzy Minor Drive",
+    "bpm": 128,
+    "rootKey": "E minor",
+    "steps": [
+      {
+        "note": 28,
+        "velocity": 125,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 35,
+        "velocity": 115,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 120,
+        "accent": false,
+        "slide": true
+      },
+      {
+        "note": 28,
+        "velocity": 118,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": null,
+        "velocity": 95,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 37,
+        "velocity": 122,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 35,
+        "velocity": 125,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 28,
+        "velocity": 115,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 118,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 37,
+        "velocity": 125,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 28,
+        "velocity": 120,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 35,
+        "velocity": 110,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 125,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 28,
+        "velocity": 122,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 37,
+        "velocity": 125,
+        "accent": true,
+        "slide": true
+      }
+    ]
+  }
+}

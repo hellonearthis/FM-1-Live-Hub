@@ -1,0 +1,92 @@
+{
+  "name": "FM-1 Hub",
+  "device": "FM-1 Hub",
+  "pass_unmapped": true,
+  "keys_mode": "auto",
+  "bindings": [
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 60 },
+      "to": { "type": "button", "button": "PLAY" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 61 },
+      "to": { "type": "button", "button": "REC" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 62 },
+      "to": { "type": "button", "button": "SEQ" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 63 },
+      "to": { "type": "button", "button": "ARP" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 64 },
+      "to": { "type": "button", "button": "SAVE" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 65 },
+      "to": { "type": "button", "button": "HOME" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 66 },
+      "to": { "type": "button", "button": "EDIT" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 67 },
+      "to": { "type": "button", "button": "GLO" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 68 },
+      "to": { "type": "button", "button": "ENV" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 69 },
+      "to": { "type": "button", "button": "LFO" }
+    },
+    {
+      "when": { "type": "note_on", "channel": 16, "note": 70 },
+      "to": { "type": "button", "button": "FX" }
+    },
+    {
+      "when": { "type": "note_range", "channel": 15, "range": [0, 127] },
+      "to": { "type": "keys", "base": 53, "fold": true }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 74 },
+      "to": { "type": "knob", "knob": "KNOB1" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 71 },
+      "to": { "type": "knob", "knob": "KNOB2" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 72 },
+      "to": { "type": "knob", "knob": "KNOB3" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 73 },
+      "to": { "type": "knob", "knob": "KNOB4" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 20 },
+      "to": { "type": "knob", "knob": "ALGORITHM" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 7 },
+      "to": { "type": "knob", "knob": "MASTER" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 21 },
+      "to": { "type": "knob", "knob": "SELECT" }
+    },
+    {
+      "when": { "type": "cc", "channel": 1, "controller": 22 },
+      "to": { "type": "knob", "knob": "PRESETS" }
+    },
+    {
+      "when": { "type": "note_range", "channel": 1, "range": [0, 127] },
+      "to": { "type": "midi" }
+    }
+  ]
+}

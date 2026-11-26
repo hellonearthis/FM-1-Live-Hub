@@ -1,0 +1,109 @@
+{
+  "id": "subtle_hypnosis_138_bpm",
+  "builtin": false,
+  "style": null,
+  "savedAt": "2026-11-25T07:18:01.343Z",
+  "pattern": {
+    "patternName": "Subtle Hypnosis (138 BPM)",
+    "bpm": 138,
+    "rootKey": "C Minor",
+    "steps": [
+      {
+        "note": 36,
+        "velocity": 80,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 60,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 43,
+        "velocity": 75,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 50,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 46,
+        "velocity": 85,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 70,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 65,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 51,
+        "velocity": 80,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 55,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 75,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 96,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 60,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 46,
+        "velocity": 85,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 50,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 80,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 43,
+        "velocity": 85,
+        "accent": true,
+        "slide": false
+      }
+    ]
+  }
+}

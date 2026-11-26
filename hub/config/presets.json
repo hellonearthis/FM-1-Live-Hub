@@ -1,0 +1,27 @@
+{
+  "activeStyleSkill": "cyberpunk-electro",
+  "quantizeBars": 1,
+  "presets": [
+    {
+      "id": "harmonic_drift",
+      "midiTrigger": { "type": "note_on", "note": 36, "channel": 10 },
+      "mode": "nudge_modulators",
+      "syncToDownbeat": false,
+      "mcpAction": "mutate_patch"
+    },
+    {
+      "id": "style_morph",
+      "midiTrigger": { "type": "cc", "number": 16, "channel": 1 },
+      "mode": "crossfade_cached_slots",
+      "syncToDownbeat": false,
+      "mcpAction": "interpolate_slots"
+    },
+    {
+      "id": "ghost_response",
+      "midiTrigger": { "type": "note_on", "note": 37, "channel": 10 },
+      "mode": "counterphrase_generator",
+      "syncToDownbeat": true,
+      "mcpAction": "generate_counterphrase"
+    }
+  ]
+}

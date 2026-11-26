@@ -1,0 +1,109 @@
+{
+  "id": "bond_spy_vamp_custom",
+  "builtin": false,
+  "style": "atek303-flash",
+  "savedAt": "2026-11-26T15:26:25.082Z",
+  "pattern": {
+    "patternName": "BOND SPY VAMP",
+    "bpm": 128,
+    "rootKey": "C Chromatic",
+    "steps": [
+      {
+        "note": 28,
+        "velocity": 120,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 35,
+        "velocity": 92,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 28,
+        "velocity": 92,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 120,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 28,
+        "velocity": 120,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 37,
+        "velocity": 92,
+        "accent": false,
+        "slide": true
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 28,
+        "velocity": 92,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 36,
+        "velocity": 120,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 35,
+        "velocity": 92,
+        "accent": false,
+        "slide": false
+      }
+    ]
+  }
+}

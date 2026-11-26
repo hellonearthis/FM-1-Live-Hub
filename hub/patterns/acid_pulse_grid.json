@@ -1,0 +1,109 @@
+{
+  "id": "acid_pulse_grid",
+  "builtin": false,
+  "style": "more energetic, busier 16th notes and accents",
+  "savedAt": "2026-11-25T06:36:40.646Z",
+  "pattern": {
+    "patternName": "Acid Pulse Grid",
+    "bpm": 138,
+    "rootKey": "C Minor",
+    "steps": [
+      {
+        "note": 48,
+        "velocity": 100,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 52,
+        "velocity": 100,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 60,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 55,
+        "velocity": 100,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 51,
+        "velocity": 90,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 60,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 58,
+        "velocity": 110,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 55,
+        "velocity": 100,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 51,
+        "velocity": 100,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": null,
+        "velocity": 60,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 64,
+        "velocity": 120,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 58,
+        "velocity": 100,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": 55,
+        "velocity": 100,
+        "accent": true,
+        "slide": true
+      },
+      {
+        "note": 52,
+        "velocity": 90,
+        "accent": true,
+        "slide": false
+      },
+      {
+        "note": null,
+        "velocity": 60,
+        "accent": false,
+        "slide": false
+      },
+      {
+        "note": 48,
+        "velocity": 100,
+        "accent": true,
+        "slide": true
+      }
+    ]
+  }
+}
